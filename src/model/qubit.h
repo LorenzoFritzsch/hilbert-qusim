@@ -1,0 +1,16 @@
+#ifndef QUBIT_QUBIT_H
+#define QUBIT_QUBIT_H
+
+#include "hilbert_namespace.h"
+
+class Qubit {
+public:
+  Complex alpha;
+  Complex beta;
+
+  Qubit(Complex alpha = 1, Complex beta = 0);
+
+  ComplexVector toVector();
+};
+
+#endif // !QUBIT_QUBIT_H
