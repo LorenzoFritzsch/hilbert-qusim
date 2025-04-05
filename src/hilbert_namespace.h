@@ -1,7 +1,8 @@
 #ifndef HILBERT_NAMESPACE_H
 #define HILBERT_NAMESPACE_H
 
-#include "complex"
+#include <vector>
+#include <complex>
 
 using Complex = std::complex<double>;
 
