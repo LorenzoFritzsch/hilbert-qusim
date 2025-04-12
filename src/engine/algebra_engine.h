@@ -2,22 +2,25 @@
 #define ALGEBRA_ENGINE_H
 
 #include "hilbert_namespace.h"
+#include "lazy_matrix.h"
 
 class AlgebraEngine {
 public:
-  AlgebraEngine() {}
+  AlgebraEngine() = default;
 
-  Complex conjugate(Complex *c);
+  static ComplexMatrix conjugateTranspose(const ComplexMatrix &mat);
 
-  ComplexMatrix conjugateTranspose(ComplexMatrix *mat);
+  static ComplexVector multiply(const ComplexVector &v, const Complex &k);
 
-  Complex multiply(Complex *a, Complex *b);
+  static Complex innerProduct(const ComplexVector &a, const ComplexVector &b);
 
-  ComplexVector multiply(ComplexVector *v, Complex *k);
+  static Complex innerProduct(const ComplexMatrix &a, const ComplexMatrix &b);
 
-  ComplexVector multiply(ComplexVector *a, ComplexVector *b);
+  static ComplexMatrix tensorialProduct(ComplexMatrix &a, int times);
 
-  ComplexMatrix tensorialProduct(ComplexMatrix *a, ComplexMatrix *b);
+  static ComplexVector tensorialProduct(ComplexVector &a, ComplexVector &b);
+
+  static ComplexMatrix tensorialProduct(ComplexMatrix &a, ComplexMatrix &b);
 };
 
 #endif // !ALGEBRA_ENGINE_H

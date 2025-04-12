@@ -5,12 +5,12 @@
 
 class GateEngine {
 public:
-  GateEngine() {}
+  GateEngine() = default;
 
-  void hadamardGate(ComplexMatrix *state);
+  void hadamardGate(ComplexMatrix &state);
 
-  void controlledU(ComplexVector *control, ComplexVector *target,
-                   ComplexMatrix *u);
+  void controlledU(ComplexVector &control, ComplexVector &target,
+                   ComplexMatrix &u);
 };
 
 #endif // !GATE_ENGINE_H

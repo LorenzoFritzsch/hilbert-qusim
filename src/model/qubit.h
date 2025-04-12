@@ -8,7 +8,8 @@ public:
   Complex alpha;
   Complex beta;
 
-  Qubit(Complex alpha = 1, Complex beta = 0);
+  Qubit();
+  Qubit(Complex alpha, Complex beta);
 
   ComplexVector toVector();
 };

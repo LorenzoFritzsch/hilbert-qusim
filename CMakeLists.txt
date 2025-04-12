@@ -3,7 +3,7 @@ project(hilbert)
 
 set(CMAKE_CXX_STANDARD 26)
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/model ${PROJECT_SOURCE_DIR}/src/engine)
 
 file(GLOB_RECURSE all_srcs "${PROJECT_SOURCE_DIR}/src/*.h"
      "${PROJECT_SOURCE_DIR}/src/*.cpp")
@@ -18,6 +18,10 @@ enable_testing()
 set(CMAKE_BUILD_TYPE Debug)
 set(TEST_DIR "${PROJECT_SOURCE_DIR}/test")
 
-add_executable(tests "${TEST_DIR}/algebra_engine_test.cpp")
-target_link_libraries(tests hilbert)
-add_test(NAME "algebra_engine_test" COMMAND tests)
+add_executable(algebra_engine_test "${TEST_DIR}/algebra_engine_test.cpp")
+target_link_libraries(algebra_engine_test hilbert)
+add_test(NAME "algebra_engine_test" COMMAND algebra_engine_test)
+
+add_executable(lazy_matrix_test "${TEST_DIR}/lazy_matrix_test.cpp")
+target_link_libraries(lazy_matrix_test hilbert)
+add_test(NAME "lazy_matrix_test" COMMAND lazy_matrix_test)
