@@ -12,6 +12,9 @@ void printMatrix(const ComplexMatrix &matrix) {
 }
 
 bool areMatricesEqual(const ComplexMatrix &m1, const ComplexMatrix &m2) {
+  if (m1.size() != m2.size()) {
+    return false;
+  }
   for (int i = 0; i < m1.size(); i++) {
     for (int j = 0; j < m1[0].size(); j++) {
       if (m1[i][j] != m2[i][j]) {
@@ -24,8 +27,8 @@ bool areMatricesEqual(const ComplexMatrix &m1, const ComplexMatrix &m2) {
 
 bool itShouldComputeLazyMatrix_4x4_tensorialProduct() {
   // Given
-  const auto a = hadamard_2x2;
-  const auto b = identity_2x2;
+  const auto a = std::make_shared<ComplexMatrix>(hadamard_2x2);
+  const auto b = std::make_shared<ComplexMatrix>(identity_2x2);
 
   // When
   const auto cLazy = new LazyMatrix(a, b, LazyMatrixOperation::TENSORIAL_PRODUCT);
@@ -41,42 +44,66 @@ bool itShouldComputeLazyMatrix_4x4_tensorialProduct() {
   return expected == cLazy->get();
 }
 
-bool itShouldComputeLazyMatrix_8x8_tensorialProduct() {
+bool itShouldComputeLazyMatrix_16x16_tensorialProduct() {
   // Given
-  const ComplexMatrix m = {
+  const auto m = std::make_shared<ComplexMatrix>(ComplexMatrix{
     {1, 0, 0, 0},
     {0, 1, 0, 0},
     {0, 0, 1, 0},
     {0, 0, 0, 1}
-  };
+  });
 
   // When
   const auto cLazy = new LazyMatrix(m, m, LazyMatrixOperation::TENSORIAL_PRODUCT);
 
   // Then
   const ComplexMatrix expected = {
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+  };
+  return areMatricesEqual(expected, cLazy->get());
+}
+
+bool itShouldComputeLazyMatrix_8x8_fromLazyMatrices() {
+  // Given
+  const auto a = std::make_shared<ComplexMatrix>(identity_2x2);
+  const auto aLazy = std::make_shared<LazyMatrix>(a, a, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  const auto bLazy = std::make_shared<LazyMatrix>(a, 1);
+
+  // When
+  const auto cLazy = new LazyMatrix(aLazy, bLazy, LazyMatrixOperation::TENSORIAL_PRODUCT);
+
+  // Then
+  const ComplexMatrix expected = {
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 1}
   };
   return areMatricesEqual(expected, cLazy->get());
 }
 
 bool itShouldComputeLazyMatrix_2x2_scalarProduct() {
   // Given
-  const auto m = identity_2x2;
+  const auto m = std::make_shared<ComplexMatrix>(identity_2x2);
   constexpr Complex k = {1, 4};
 
   // When
@@ -95,10 +122,13 @@ int main() {
   if (!itShouldComputeLazyMatrix_4x4_tensorialProduct()) {
     failed++;
   }
-  if (!itShouldComputeLazyMatrix_8x8_tensorialProduct()) {
+  if (!itShouldComputeLazyMatrix_16x16_tensorialProduct()) {
     failed++;
   }
   if (!itShouldComputeLazyMatrix_2x2_scalarProduct()) {
+    failed++;
+  }
+  if (!itShouldComputeLazyMatrix_8x8_fromLazyMatrices()) {
     failed++;
   }
   return failed == 0 ? 0 : 1;
