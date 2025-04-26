@@ -1,6 +1,6 @@
 #include "algebra_engine.h"
 
-ComplexMatrix AlgebraEngine::conjugateTranspose(const ComplexMatrix &mat) {
+ComplexMatrix AlgebraEngine::conjugate_transpose(const ComplexMatrix &mat) {
   const auto initial_n = mat.size();
   const auto initial_m = mat.begin()->size();
 
@@ -23,13 +23,13 @@ ComplexVector AlgebraEngine::multiply(const ComplexVector &v, const Complex &k) 
   return result;
 }
 
-Complex AlgebraEngine::innerProduct(const ComplexVector &a, const ComplexVector &b) {
+Complex AlgebraEngine::inner_product(const ComplexVector &a, const ComplexVector &b) {
   const auto aMatrix = ComplexMatrix(1, a);
   const auto bMatrix = ComplexMatrix(1, b);
-  return innerProduct(aMatrix, bMatrix);
+  return inner_product(aMatrix, bMatrix);
 }
 
-Complex AlgebraEngine::innerProduct(const ComplexMatrix &a, const ComplexMatrix &b) {
+Complex AlgebraEngine::inner_product(const ComplexMatrix &a, const ComplexMatrix &b) {
   Complex result = 0;
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
@@ -39,7 +39,7 @@ Complex AlgebraEngine::innerProduct(const ComplexMatrix &a, const ComplexMatrix 
   return result;
 }
 
-std::shared_ptr<LazyMatrix> AlgebraEngine::tensorialProduct(const std::shared_ptr<ComplexMatrix>& a, const int times) {
+std::shared_ptr<LazyMatrix> AlgebraEngine::tensorial_product(const std::shared_ptr<ComplexMatrix>& a, const int times) {
   auto result = std::make_shared<LazyMatrix>(a, a, LazyMatrixOperation::TENSORIAL_PRODUCT);
   auto lazyA = std::make_shared<LazyMatrix>(a, 1);
   // Starts at 2, because `a` was already multiplied with itself once, missing products are then: times - 2.

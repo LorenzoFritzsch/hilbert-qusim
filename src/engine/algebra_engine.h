@@ -8,15 +8,15 @@ class AlgebraEngine {
 public:
   AlgebraEngine() = default;
 
-  static ComplexMatrix conjugateTranspose(const ComplexMatrix &mat);
+  static ComplexMatrix conjugate_transpose(const ComplexMatrix &mat);
 
   static ComplexVector multiply(const ComplexVector &v, const Complex &k);
 
-  static Complex innerProduct(const ComplexVector &a, const ComplexVector &b);
+  static Complex inner_product(const ComplexVector &a, const ComplexVector &b);
 
-  static Complex innerProduct(const ComplexMatrix &a, const ComplexMatrix &b);
+  static Complex inner_product(const ComplexMatrix &a, const ComplexMatrix &b);
 
-  static std::shared_ptr<LazyMatrix> tensorialProduct(const std::shared_ptr<ComplexMatrix>& a, int times);
+  static std::shared_ptr<LazyMatrix> tensorial_product(const std::shared_ptr<ComplexMatrix>& a, int times);
 };
 
 #endif // !ALGEBRA_ENGINE_H

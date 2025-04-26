@@ -11,7 +11,7 @@ public:
   Qubit();
   Qubit(Complex alpha, Complex beta);
 
-  ComplexVector toVector();
+  ComplexVector to_vector();
 };
 
 #endif // !QUBIT_QUBIT_H

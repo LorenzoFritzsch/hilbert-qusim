@@ -2,7 +2,7 @@
 #include "../src/engine/algebra_engine.h"
 #include <iostream>
 
-bool verifyIdentityMatrix(const ComplexMatrix &matrix) {
+bool verify_identity_matrix(const ComplexMatrix &matrix) {
   if (matrix.size() != matrix[0].size()) {
     return false;
   }
@@ -22,77 +22,77 @@ bool verifyIdentityMatrix(const ComplexMatrix &matrix) {
   return true;
 }
 
-bool itShouldComputeConjugateTranspose() {
+bool it_should_compute_conjugate_transpose() {
   // Given
-  auto complexMatrix = ComplexMatrix(2, ComplexVector(2, 1));
-  complexMatrix[0][0] = Complex(1, 1);
-  complexMatrix[0][1] = Complex(1, 2);
-  complexMatrix[1][0] = Complex(2, 1);
-  complexMatrix[1][1] = Complex(2, 2);
+  auto complex_matrix = ComplexMatrix(2, ComplexVector(2, 1));
+  complex_matrix[0][0] = Complex(1, 1);
+  complex_matrix[0][1] = Complex(1, 2);
+  complex_matrix[1][0] = Complex(2, 1);
+  complex_matrix[1][1] = Complex(2, 2);
 
   // When
-  auto conjugateTranspose = AlgebraEngine::conjugateTranspose(complexMatrix);
-  conjugateTranspose = AlgebraEngine::conjugateTranspose(conjugateTranspose);
+  auto conjugate_transpose = AlgebraEngine::conjugate_transpose(complex_matrix);
+  conjugate_transpose = AlgebraEngine::conjugate_transpose(conjugate_transpose);
 
-  // Then - Applying the conjugateTranspose twice should return the original matrix
-  return complexMatrix == conjugateTranspose;
+  // Then - Applying the conjugate transpose twice should return the original matrix
+  return complex_matrix == conjugate_transpose;
 }
 
-bool itShouldMultiplyVectorByScalar() {
+bool it_should_multiply_vector_by_scalar() {
   // Given
-  const auto complexVector = ComplexVector(2, 1);
+  const auto complex_vector = ComplexVector(2, 1);
   constexpr auto scalar = Complex(2, 2);
 
   // When
-  const auto result = AlgebraEngine::multiply(complexVector, scalar);
+  const auto result = AlgebraEngine::multiply(complex_vector, scalar);
 
   // Then
   return result[0] == Complex(2, 2) && result[1] == Complex(2, 2);
 }
 
-bool itShouldComputeInnerProduct_betweenTwoVectors() {
+bool it_should_compute_inner_product_between_two_vectors() {
   // Given
-  const auto complexVectorA = ComplexVector(1, 1);
-  const auto complexVectorB = ComplexVector(1, 1);
-  const auto complexVectorC = ComplexVector(1, 0);
+  const auto complex_vector_a = ComplexVector(1, 1);
+  const auto complex_vector_b = ComplexVector(1, 1);
+  const auto complex_vector_c = ComplexVector(1, 0);
 
   // When
-  const auto resultAScalarB = AlgebraEngine::innerProduct(complexVectorA, complexVectorB);
-  const auto resultAScalarC = AlgebraEngine::innerProduct(complexVectorA, complexVectorC);
+  const auto result_a_scalar_b = AlgebraEngine::inner_product(complex_vector_a, complex_vector_b);
+  const auto result_a_scalar_c = AlgebraEngine::inner_product(complex_vector_a, complex_vector_c);
 
   // Then
-  const bool isScalarBetweenOrthogonalVectorsZero = resultAScalarC == Complex(0, 0);
-  const bool isScalarBetweenEqualVectorsOne = resultAScalarB == Complex(1, 0);
-  return isScalarBetweenOrthogonalVectorsZero && isScalarBetweenEqualVectorsOne;
+  const bool is_scalar_between_orthogonal_vectors_zero = result_a_scalar_c == Complex(0, 0);
+  const bool is_scalar_between_equal_vectors_one = result_a_scalar_b == Complex(1, 0);
+  return is_scalar_between_orthogonal_vectors_zero && is_scalar_between_equal_vectors_one;
 }
 
-bool itShouldComputeMatrixPower() {
+bool it_should_compute_matrix_power() {
   // Given
   const auto a = std::make_shared<ComplexMatrix>(identity_2x2);
   constexpr auto times = 8;
 
   // When
-  const auto result = AlgebraEngine::tensorialProduct(a, times);
+  const auto result = AlgebraEngine::tensorial_product(a, times);
 
   // Then
   const auto actual = result->get();
-  return verifyIdentityMatrix(actual)
+  return verify_identity_matrix(actual)
          && static_cast<int>(actual.size()) == std::pow(2, times);
 }
 
 int main() {
   int failed = 0;
 
-  if (!itShouldComputeConjugateTranspose()) {
+  if (!it_should_compute_conjugate_transpose()) {
     failed += 1;
   }
-  if (!itShouldMultiplyVectorByScalar()) {
+  if (!it_should_multiply_vector_by_scalar()) {
     failed += 1;
   }
-  if (!itShouldComputeInnerProduct_betweenTwoVectors()) {
+  if (!it_should_compute_inner_product_between_two_vectors()) {
     failed += 1;
   }
-  if (!itShouldComputeMatrixPower()) {
+  if (!it_should_compute_matrix_power()) {
     failed += 1;
   }
 

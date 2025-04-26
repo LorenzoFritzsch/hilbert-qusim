@@ -1,6 +1,6 @@
 #include "lazy_matrix.h"
 
-int getSector(const int n, const int d) {
+int get_sector(const int n, const int d) {
   int k = 0;
   while ((k + 1) * d <= n) {
     k++;
@@ -8,38 +8,38 @@ int getSector(const int n, const int d) {
   return k;
 }
 
-ComplexMatrix toComplexMatrix(const ComplexOptionalMatrix& optMatrix) {
+ComplexMatrix to_complex_matrix(const ComplexOptionalMatrix& opt_matrix) {
   ComplexMatrix result;
-  result.reserve(optMatrix.size());
+  result.reserve(opt_matrix.size());
 
-  for (const auto& row : optMatrix) {
-    ComplexVector newRow;
-    newRow.reserve(row.size());
+  for (const auto& row : opt_matrix) {
+    ComplexVector new_row;
+    new_row.reserve(row.size());
     for (const auto& elem : row) {
-      newRow.push_back(elem.value_or(Complex(0)));
+      new_row.push_back(elem.value_or(Complex(0)));
     }
-    result.push_back(std::move(newRow));
+    result.push_back(std::move(new_row));
   }
   return result;
 }
 
 Complex LazyMatrix::get(const int m, const int n) {
-  if (c[m][n] != std::nullopt) {
-    return *c[m][n];
+  if (c_[m][n] != std::nullopt) {
+    return *c_[m][n];
   }
-  switch (operation) {
+  switch (operation_) {
     case LazyMatrixOperation::TENSORIAL_PRODUCT: {
-      const auto a_m = getSector(m, getBRowSize());
-      const auto a_n = getSector(n, getBColSize());
-      const auto b_m = m % getBColSize();
-      const auto b_n = n % getBColSize();
-      const auto v = getFromA(a_m, a_n) * getFromB(b_m, b_n);
-      c[m][n] = v;
+      const auto a_m = get_sector(m, get_b_row_size());
+      const auto a_n = get_sector(n, get_b_col_size());
+      const auto b_m = m % get_b_col_size();
+      const auto b_n = n % get_b_col_size();
+      const auto v = get_from_a(a_m, a_n) * get_from_b(b_m, b_n);
+      c_[m][n] = v;
       return v;
     }
     case LazyMatrixOperation::SCALAR_PRODUCT: {
-      const auto v = getFromA(m, n) * k.value();
-      c[m][n] = v;
+      const auto v = get_from_a(m, n) * k_.value();
+      c_[m][n] = v;
       return v;
     }
     default: throw std::runtime_error("LazyMatrix::get: operation not recognized");
@@ -48,46 +48,45 @@ Complex LazyMatrix::get(const int m, const int n) {
 
 ComplexMatrix LazyMatrix::get(const bool complete) {
   if (!complete) {
-    return toComplexMatrix(c);
+    return to_complex_matrix(c_);
   }
-  for (int m = 0; m < getSize(); m++) {
-    for (int n = 0; n < getSize(); n++) {
+  for (int m = 0; m < get_size(); m++) {
+    for (int n = 0; n < get_size(); n++) {
       get(m, n);
     }
   }
-  return toComplexMatrix(c);
+  return to_complex_matrix(c_);
 }
 
-int LazyMatrix::getSize() const {
-  return static_cast<int>(c.size());
+int LazyMatrix::get_size() const {
+  return static_cast<int>(c_.size());
 }
 
 // Recursion is broken once the value of the original ComplexMatrices are finally accessed
-Complex LazyMatrix::getFromA(const int m, const int n) const {
-  if (a) {
-    return (*a)->at(m).at(n);
+Complex LazyMatrix::get_from_a(const int m, const int n) const {
+  if (a_) {
+    return (*a_)->at(m).at(n);
   }
-  return (*aLazy)->get(m, n);
+  return (*a_lazy_)->get(m, n);
 }
 
-Complex LazyMatrix::getFromB(const int m, const int n) const {
-  if (b) {
-    auto asdf = *(b.value());
-    return (*b)->at(m).at(n);
+Complex LazyMatrix::get_from_b(const int m, const int n) const {
+  if (b_) {
+    return (*b_)->at(m).at(n);
   }
-  return (*bLazy)->get(m, n);
+  return (*b_lazy_)->get(m, n);
 }
 
-int LazyMatrix::getBRowSize() const {
-  if (b) {
-    return static_cast<int>(b.value()->size());
+int LazyMatrix::get_b_row_size() const {
+  if (b_) {
+    return static_cast<int>(b_.value()->size());
   }
-  return (*bLazy)->getSize();
+  return (*b_lazy_)->get_size();
 }
 
-int LazyMatrix::getBColSize() const {
-  if (b) {
-    return static_cast<int>(b.value()->at(0).size());
+int LazyMatrix::get_b_col_size() const {
+  if (b_) {
+    return static_cast<int>(b_.value()->at(0).size());
   }
-  return (*bLazy)->getSize();
+  return (*b_lazy_)->get_size();
 }

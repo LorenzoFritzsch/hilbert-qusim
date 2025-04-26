@@ -11,16 +11,16 @@ enum class LazyMatrixOperation {
 class LazyMatrix {
 public:
   LazyMatrix(std::shared_ptr<ComplexMatrix> a, std::shared_ptr<ComplexMatrix> b, const LazyMatrixOperation operation)
-    : a(std::move(a)),
-      b(std::move(b)),
-      aLazy(std::nullopt),
-      bLazy(std::nullopt),
-      k(std::nullopt),
-      operation(operation) {
+    : a_(std::move(a)),
+      b_(std::move(b)),
+      a_lazy_(std::nullopt),
+      b_lazy_(std::nullopt),
+      k_(std::nullopt),
+      operation_(operation) {
     switch (operation) {
       case LazyMatrixOperation::TENSORIAL_PRODUCT: {
-        const auto cSize = this->a.value()->size() * this->b.value()->size();
-        c = ComplexOptionalMatrix(cSize, std::vector<std::optional<std::complex<double> > >(cSize, std::nullopt));
+        const auto c_size = this->a_.value()->size() * this->b_.value()->size();
+        c_ = ComplexOptionalMatrix(c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
         break;
       }
       default: throw std::invalid_argument("LazyMatrix: invalid operation");
@@ -28,24 +28,24 @@ public:
   }
 
   LazyMatrix(std::shared_ptr<ComplexMatrix> m, const Complex k)
-    : a(std::move(m)), b(std::nullopt),
-      aLazy(std::nullopt),
-      bLazy(std::nullopt), k(k),
-      operation(LazyMatrixOperation::SCALAR_PRODUCT) {
-    const auto cSize = this->a.value()->size();
-    c = ComplexOptionalMatrix(cSize, std::vector<std::optional<std::complex<double> > >(cSize, std::nullopt));
+    : a_(std::move(m)), b_(std::nullopt),
+      a_lazy_(std::nullopt),
+      b_lazy_(std::nullopt), k_(k),
+      operation_(LazyMatrixOperation::SCALAR_PRODUCT) {
+    const auto c_size = this->a_.value()->size();
+    c_ = ComplexOptionalMatrix(c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
   }
 
   LazyMatrix(std::shared_ptr<LazyMatrix> a, std::shared_ptr<LazyMatrix> b, const LazyMatrixOperation operation)
-    : a(std::nullopt), b(std::nullopt),
-      aLazy(std::move(a)),
-      bLazy(std::move(b)),
-      k(std::nullopt),
-      operation(operation) {
+    : a_(std::nullopt), b_(std::nullopt),
+      a_lazy_(std::move(a)),
+      b_lazy_(std::move(b)),
+      k_(std::nullopt),
+      operation_(operation) {
     switch (operation) {
       case LazyMatrixOperation::TENSORIAL_PRODUCT: {
-        const auto cSize = (*aLazy)->getSize() * (*bLazy)->getSize();
-        c = ComplexOptionalMatrix(cSize, std::vector<std::optional<std::complex<double> > >(cSize, std::nullopt));
+        const auto c_size = (*a_lazy_)->get_size() * (*b_lazy_)->get_size();
+        c_ = ComplexOptionalMatrix(c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
         break;
       }
       default: throw std::invalid_argument("LazyMatrix: invalid operation");
@@ -56,24 +56,24 @@ public:
 
   ComplexMatrix get(bool complete = true);
 
-  [[nodiscard]] int getSize() const;
+  [[nodiscard]] int get_size() const;
 
 private:
-  const std::optional<std::shared_ptr<ComplexMatrix>> a;
-  const std::optional<std::shared_ptr<ComplexMatrix>> b;
-  const std::optional<std::shared_ptr<LazyMatrix>> aLazy;
-  const std::optional<std::shared_ptr<LazyMatrix>> bLazy;
-  const std::optional<Complex> k;
-  const LazyMatrixOperation operation;
-  ComplexOptionalMatrix c;
+  const std::optional<std::shared_ptr<ComplexMatrix>> a_;
+  const std::optional<std::shared_ptr<ComplexMatrix>> b_;
+  const std::optional<std::shared_ptr<LazyMatrix>> a_lazy_;
+  const std::optional<std::shared_ptr<LazyMatrix>> b_lazy_;
+  const std::optional<Complex> k_;
+  const LazyMatrixOperation operation_;
+  ComplexOptionalMatrix c_;
 
-  [[nodiscard]] Complex getFromA(int m, int n) const;
+  [[nodiscard]] Complex get_from_a(int m, int n) const;
 
-  [[nodiscard]] Complex getFromB(int m, int n) const;
+  [[nodiscard]] Complex get_from_b(int m, int n) const;
 
-  [[nodiscard]] int getBRowSize() const;
+  [[nodiscard]] int get_b_row_size() const;
 
-  [[nodiscard]] int getBColSize() const;
+  [[nodiscard]] int get_b_col_size() const;
 };
 
 #endif // !LAZY_MATRIX_H

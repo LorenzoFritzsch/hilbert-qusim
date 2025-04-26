@@ -7,4 +7,4 @@ Qubit::Qubit() {
 
 Qubit::Qubit(const std::complex<double> alpha, const std::complex<double> beta) : alpha(alpha), beta(beta) {}
 
-std::vector<std::complex<double>> Qubit::toVector() { return {alpha, beta}; }
+ComplexVector Qubit::to_vector() { return {alpha, beta}; }
