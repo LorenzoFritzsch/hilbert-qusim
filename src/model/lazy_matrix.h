@@ -71,9 +71,9 @@ private:
 
   [[nodiscard]] Complex getFromB(int m, int n) const;
 
-  int getBRowSize() const;
+  [[nodiscard]] int getBRowSize() const;
 
-  int getBColSize() const;
+  [[nodiscard]] int getBColSize() const;
 };
 
 #endif // !LAZY_MATRIX_H
