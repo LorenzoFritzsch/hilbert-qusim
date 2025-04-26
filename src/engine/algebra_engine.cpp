@@ -38,3 +38,13 @@ Complex AlgebraEngine::innerProduct(const ComplexMatrix &a, const ComplexMatrix 
   }
   return result;
 }
+
+std::shared_ptr<LazyMatrix> AlgebraEngine::tensorialProduct(const std::shared_ptr<ComplexMatrix>& a, const int times) {
+  auto result = std::make_shared<LazyMatrix>(a, a, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  auto lazyA = std::make_shared<LazyMatrix>(a, 1);
+  // Starts at 2, because `a` was already multiplied with itself once, missing products are then: times - 2.
+  for (int _ = 2; _ < times; _++) {
+    result = std::make_shared<LazyMatrix>(result, lazyA, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  }
+  return result;
+}

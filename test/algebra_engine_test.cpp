@@ -1,5 +1,26 @@
 // TODO: Fix CMake
 #include "../src/engine/algebra_engine.h"
+#include <iostream>
+
+bool verifyIdentityMatrix(const ComplexMatrix &matrix) {
+  if (matrix.size() != matrix[0].size()) {
+    return false;
+  }
+  for (auto n = 0; n < matrix.size(); n++) {
+    for (auto m = 0; m < matrix.size(); m++) {
+      if (n == m) {
+        if (matrix[n][m] != Complex(1, 0)) {
+          return false;
+        }
+      } else {
+        if (matrix[n][m] != Complex(0, 0)) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
 
 bool itShouldComputeConjugateTranspose() {
   // Given
@@ -45,6 +66,20 @@ bool itShouldComputeInnerProduct_betweenTwoVectors() {
   return isScalarBetweenOrthogonalVectorsZero && isScalarBetweenEqualVectorsOne;
 }
 
+bool itShouldComputeMatrixPower() {
+  // Given
+  const auto a = std::make_shared<ComplexMatrix>(identity_2x2);
+  constexpr auto times = 8;
+
+  // When
+  const auto result = AlgebraEngine::tensorialProduct(a, times);
+
+  // Then
+  const auto actual = result->get();
+  return verifyIdentityMatrix(actual)
+         && static_cast<int>(actual.size()) == std::pow(2, times);
+}
+
 int main() {
   int failed = 0;
 
@@ -55,6 +90,9 @@ int main() {
     failed += 1;
   }
   if (!itShouldComputeInnerProduct_betweenTwoVectors()) {
+    failed += 1;
+  }
+  if (!itShouldComputeMatrixPower()) {
     failed += 1;
   }
 
