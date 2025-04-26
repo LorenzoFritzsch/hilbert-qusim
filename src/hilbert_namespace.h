@@ -23,4 +23,19 @@ const ComplexMatrix hadamard_2x2 = {
   {1 / std::sqrt(2), -1 / std::sqrt(2)},
 };
 
+const ComplexMatrix pauli_x = {
+  {0, 1},
+  {1, 0}
+};
+
+const ComplexMatrix pauli_y = {
+  {0, Complex(0, -1)},
+  {Complex(0, 1), 0}
+};
+
+const ComplexMatrix pauli_z = {
+  {1, 0},
+  {0, -1}
+};
+
 #endif // !HILBERT_NAMESPACE_H
