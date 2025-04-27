@@ -13,6 +13,11 @@ using ComplexMatrix = std::vector<ComplexVector>;
 
 using ComplexOptionalMatrix = std::vector<std::vector<std::optional<std::complex<double>>>>;
 
+using ComplexOptionalVector = std::vector<std::optional<std::complex<double>>>;
+
+const ComplexVector ket_0 = {1, 0};
+const ComplexVector ket_1 = {0, 1};
+
 const ComplexMatrix identity_2x2 = {
   {1, 0},
   {0, 1}

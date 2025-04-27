@@ -46,19 +46,27 @@ Complex LazyMatrix::get(const int m, const int n) {
   }
 }
 
+ComplexVector LazyMatrix::get_row(const int m) {
+  auto result = ComplexVector(c_[m].size(), 0);
+  for (int i = 0; i < c_[m].size(); i++) {
+    result[i] = get(m, i);
+  }
+  return result;
+}
+
 ComplexMatrix LazyMatrix::get(const bool complete) {
   if (!complete) {
     return to_complex_matrix(c_);
   }
-  for (int m = 0; m < get_size(); m++) {
-    for (int n = 0; n < get_size(); n++) {
+  for (int m = 0; m < size(); m++) {
+    for (int n = 0; n < size(); n++) {
       get(m, n);
     }
   }
   return to_complex_matrix(c_);
 }
 
-int LazyMatrix::get_size() const {
+int LazyMatrix::size() const {
   return static_cast<int>(c_.size());
 }
 
@@ -81,12 +89,12 @@ int LazyMatrix::get_b_row_size() const {
   if (b_) {
     return static_cast<int>(b_.value()->size());
   }
-  return (*b_lazy_)->get_size();
+  return (*b_lazy_)->size();
 }
 
 int LazyMatrix::get_b_col_size() const {
   if (b_) {
     return static_cast<int>(b_.value()->at(0).size());
   }
-  return (*b_lazy_)->get_size();
+  return (*b_lazy_)->size();
 }

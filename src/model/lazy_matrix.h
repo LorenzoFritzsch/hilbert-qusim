@@ -44,7 +44,7 @@ public:
       operation_(operation) {
     switch (operation) {
       case LazyMatrixOperation::TENSORIAL_PRODUCT: {
-        const auto c_size = (*a_lazy_)->get_size() * (*b_lazy_)->get_size();
+        const auto c_size = (*a_lazy_)->size() * (*b_lazy_)->size();
         c_ = ComplexOptionalMatrix(c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
         break;
       }
@@ -54,9 +54,11 @@ public:
 
   Complex get(int m, int n);
 
+  ComplexVector get_row(int m);
+
   ComplexMatrix get(bool complete = true);
 
-  [[nodiscard]] int get_size() const;
+  [[nodiscard]] int size() const;
 
 private:
   const std::optional<std::shared_ptr<ComplexMatrix>> a_;

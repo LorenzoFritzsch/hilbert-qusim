@@ -25,3 +25,7 @@ add_test(NAME "algebra_engine_test" COMMAND algebra_engine_test)
 add_executable(lazy_matrix_test "${TEST_DIR}/lazy_matrix_test.cpp")
 target_link_libraries(lazy_matrix_test hilbert)
 add_test(NAME "lazy_matrix_test" COMMAND lazy_matrix_test)
+
+add_executable(lazy_vector_test "${TEST_DIR}/lazy_vector_test.cpp")
+target_link_libraries(lazy_vector_test hilbert)
+add_test(NAME "lazy_vector_test" COMMAND lazy_vector_test)
