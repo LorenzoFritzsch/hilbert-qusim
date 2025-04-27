@@ -27,11 +27,11 @@ bool equals(const ComplexMatrix &m1, const ComplexMatrix &m2) {
 
 bool it_should_compute_lazy_matrix_tensorial_product() {
   // Given
-  const auto a = std::make_shared<ComplexMatrix>(hadamard_2x2);
-  const auto b = std::make_shared<ComplexMatrix>(identity_2x2);
+  auto a = std::make_unique<ComplexMatrix>(hadamard_2x2);
+  auto b = std::make_unique<ComplexMatrix>(identity_2x2);
 
   // When
-  const auto c_lazy = new LazyMatrix(a, b, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(a), std::move(b));
 
   // Then
   const ComplexMatrix expected = {
@@ -46,7 +46,13 @@ bool it_should_compute_lazy_matrix_tensorial_product() {
 
 bool it_should_compute_identity_lazy_matrix_tensorial_product() {
   // Given
-  const auto m = std::make_shared<ComplexMatrix>(ComplexMatrix{
+  auto m_1 = std::make_unique<ComplexMatrix>(ComplexMatrix{
+    {1, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
+  });
+  auto m_2 = std::make_unique<ComplexMatrix>(ComplexMatrix{
     {1, 0, 0, 0},
     {0, 1, 0, 0},
     {0, 0, 1, 0},
@@ -54,7 +60,7 @@ bool it_should_compute_identity_lazy_matrix_tensorial_product() {
   });
 
   // When
-  const auto c_lazy = new LazyMatrix(m, m, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(m_1), std::move(m_2));
 
   // Then
   const ComplexMatrix expected = {
@@ -80,12 +86,11 @@ bool it_should_compute_identity_lazy_matrix_tensorial_product() {
 
 bool it_should_compute_lazy_matrix_from_lazy_matrices() {
   // Given
-  const auto a = std::make_shared<ComplexMatrix>(identity_2x2);
-  const auto a_lazy = std::make_shared<LazyMatrix>(a, a, LazyMatrixOperation::TENSORIAL_PRODUCT);
-  const auto b_lazy = std::make_shared<LazyMatrix>(a, 1);
+  auto a_lazy = std::make_unique<LazyMatrix>(std::make_unique<ComplexMatrix>(identity_2x2), std::make_unique<ComplexMatrix>(identity_2x2));
+  auto b_lazy = std::make_unique<LazyMatrix>(std::make_unique<ComplexMatrix>(identity_2x2), 1);
 
   // When
-  const auto c_lazy = new LazyMatrix(a_lazy, b_lazy, LazyMatrixOperation::TENSORIAL_PRODUCT);
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(a_lazy), std::move(b_lazy));
 
   // Then
   const ComplexMatrix expected = {
@@ -103,11 +108,11 @@ bool it_should_compute_lazy_matrix_from_lazy_matrices() {
 
 bool it_should_compute_lazy_matrix_scalar_product() {
   // Given
-  const auto m = std::make_shared<ComplexMatrix>(identity_2x2);
+  auto m = std::make_unique<ComplexMatrix>(identity_2x2);
   constexpr Complex k = {1, 4};
 
   // When
-  const auto c_lazy = new LazyMatrix(m, k);
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(m), k);
 
   // Then
   const ComplexMatrix expected = {

@@ -39,12 +39,12 @@ Complex AlgebraEngine::inner_product(const ComplexMatrix &a, const ComplexMatrix
   return result;
 }
 
-std::shared_ptr<LazyMatrix> AlgebraEngine::tensorial_product(const std::shared_ptr<ComplexMatrix>& a, const int times) {
-  auto result = std::make_shared<LazyMatrix>(a, a, LazyMatrixOperation::TENSORIAL_PRODUCT);
-  auto lazyA = std::make_shared<LazyMatrix>(a, 1);
-  // Starts at 2, because `a` was already multiplied with itself once, missing products are then: times - 2.
-  for (int _ = 2; _ < times; _++) {
-    result = std::make_shared<LazyMatrix>(result, lazyA, LazyMatrixOperation::TENSORIAL_PRODUCT);
+std::unique_ptr<LazyMatrix> AlgebraEngine::tensorial_product(std::unique_ptr<ComplexMatrix> a, const int times) {
+  const auto lazy_a = std::make_shared<LazyMatrix>(std::move(a), 1);
+  auto result = std::make_unique<LazyMatrix>(*lazy_a);
+  for (int _ = 1; _ < times; _++) {
+    auto a_u = std::make_unique<LazyMatrix>(*lazy_a);
+    result = std::make_unique<LazyMatrix>(std::move(result), std::move(a_u));
   }
   return result;
 }

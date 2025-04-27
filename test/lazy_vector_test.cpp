@@ -29,7 +29,7 @@ bool it_should_compute_matrix_vector_product() {
 
 bool it_should_compute_lazy_matrix_vector_product() {
   // Given
-  auto matrix = std::make_unique<LazyMatrix>(LazyMatrix(std::make_shared<ComplexMatrix>(pauli_x), 1));
+  auto matrix = std::make_unique<LazyMatrix>(LazyMatrix(std::make_unique<ComplexMatrix>(pauli_x), 1));
   auto vector = std::make_unique<ComplexVector>(ket_0);
 
   // When
@@ -57,7 +57,7 @@ bool it_should_compute_scalar_product() {
 
 bool it_should_compute_lazy_matrix_lazy_vector_product() {
   // Given
-  auto matrix = std::make_unique<LazyMatrix>(std::make_shared<ComplexMatrix>(pauli_x), 1);
+  auto matrix = std::make_unique<LazyMatrix>(std::make_unique<ComplexMatrix>(pauli_x), 1);
   auto vector = std::make_unique<LazyVector>(std::make_unique<ComplexVector>(ket_0), 1);
 
   // When

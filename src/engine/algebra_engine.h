@@ -16,7 +16,7 @@ public:
 
   static Complex inner_product(const ComplexMatrix &a, const ComplexMatrix &b);
 
-  static std::shared_ptr<LazyMatrix> tensorial_product(const std::shared_ptr<ComplexMatrix>& a, int times);
+  static std::unique_ptr<LazyMatrix> tensorial_product(std::unique_ptr<ComplexMatrix> a, int times);
 };
 
 #endif // !ALGEBRA_ENGINE_H

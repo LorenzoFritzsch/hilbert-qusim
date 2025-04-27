@@ -68,11 +68,11 @@ bool it_should_compute_inner_product_between_two_vectors() {
 
 bool it_should_compute_matrix_power() {
   // Given
-  const auto a = std::make_shared<ComplexMatrix>(identity_2x2);
+  auto a = std::make_unique<ComplexMatrix>(identity_2x2);
   constexpr auto times = 8;
 
   // When
-  const auto result = AlgebraEngine::tensorial_product(a, times);
+  const auto result = AlgebraEngine::tensorial_product(std::move(a), times);
 
   // Then
   const auto actual = result->get();
