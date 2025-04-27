@@ -1,6 +1,7 @@
 #ifndef LAZY_MATRIX_H
 #define LAZY_MATRIX_H
 
+#include <memory>
 #include "hilbert_namespace.h"
 
 enum class LazyMatrixOperation {

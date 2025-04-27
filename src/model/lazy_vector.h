@@ -1,6 +1,7 @@
 #ifndef LAZY_VECTOR_H
 #define LAZY_VECTOR_H
 
+#include <memory>
 #include "lazy_matrix.h"
 
 class LazyVector {

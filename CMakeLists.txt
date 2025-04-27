@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(hilbert)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 
 include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/model ${PROJECT_SOURCE_DIR}/src/engine)
 

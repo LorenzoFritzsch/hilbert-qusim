@@ -1,6 +1,7 @@
 #ifndef ALGEBRA_ENGINE_H
 #define ALGEBRA_ENGINE_H
 
+#include <memory>
 #include "hilbert_namespace.h"
 #include "lazy_matrix.h"
 
