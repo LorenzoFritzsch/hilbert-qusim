@@ -4,12 +4,6 @@
 #include <memory>
 #include "hilbert_namespace.h"
 
-enum class LazyMatrixOperation {
-  TENSORIAL_PRODUCT,
-  LAZY_TENSORIAL_PRODUCT,
-  SCALAR_PRODUCT
-};
-
 class LazyMatrix {
 public:
   LazyMatrix(std::unique_ptr<ComplexMatrix> a, std::unique_ptr<ComplexMatrix> b)
@@ -63,6 +57,11 @@ public:
   [[nodiscard]] int size() const;
 
 private:
+  enum class LazyMatrixOperation {
+    TENSORIAL_PRODUCT,
+    LAZY_TENSORIAL_PRODUCT,
+    SCALAR_PRODUCT
+  };
   const std::optional<std::unique_ptr<ComplexMatrix>> a_;
   const std::optional<std::unique_ptr<ComplexMatrix>> b_;
   const std::optional<std::unique_ptr<LazyMatrix>> a_lazy_;
