@@ -12,7 +12,7 @@ public:
       a_lazy_(std::nullopt),
       b_lazy_(std::nullopt),
       k_(std::nullopt),
-      operation_(LazyMatrixOperation::TENSORIAL_PRODUCT) {
+      operation_(LazyMatrixOperation::TENSOR_PRODUCT) {
     const auto c_size = this->a_.value()->size() * this->b_.value()->size();
     c_ = std::make_unique<ComplexOptionalMatrix>(
       c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
@@ -33,7 +33,7 @@ public:
       a_lazy_(std::move(a)),
       b_lazy_(std::move(b)),
       k_(std::nullopt),
-      operation_(LazyMatrixOperation::LAZY_TENSORIAL_PRODUCT) {
+      operation_(LazyMatrixOperation::LAZY_TENSOR_PRODUCT) {
     const auto c_size = (*a_lazy_)->size() * (*b_lazy_)->size();
     c_ = std::make_unique<ComplexOptionalMatrix>(
       c_size, std::vector<std::optional<std::complex<double> > >(c_size, std::nullopt));
@@ -58,8 +58,8 @@ public:
 
 private:
   enum class LazyMatrixOperation {
-    TENSORIAL_PRODUCT,
-    LAZY_TENSORIAL_PRODUCT,
+    TENSOR_PRODUCT,
+    LAZY_TENSOR_PRODUCT,
     SCALAR_PRODUCT
   };
   const std::optional<std::unique_ptr<ComplexMatrix>> a_;

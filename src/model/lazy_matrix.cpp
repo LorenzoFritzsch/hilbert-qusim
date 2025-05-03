@@ -30,7 +30,7 @@ Complex LazyMatrix::get(const int m, const int n) const {
   }
   Complex v;
   switch (operation_) {
-    case LazyMatrixOperation::TENSORIAL_PRODUCT: {
+    case LazyMatrixOperation::TENSOR_PRODUCT: {
       const auto b_row_size = static_cast<int>(b_.value()->size());
       const auto b_col_size = static_cast<int>(b_.value()->at(0).size());
       const auto a_m = get_sector(m, b_row_size);
@@ -40,7 +40,7 @@ Complex LazyMatrix::get(const int m, const int n) const {
       v = (*a_)->at(a_m).at(a_n) * (*b_)->at(b_m).at(b_n);
       break;
     }
-    case LazyMatrixOperation::LAZY_TENSORIAL_PRODUCT: {
+    case LazyMatrixOperation::LAZY_TENSOR_PRODUCT: {
       const auto b_row_size = (*b_lazy_)->size();
       const auto b_col_size = (*b_lazy_)->size();
       const auto a_m = get_sector(m, b_row_size);
