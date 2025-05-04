@@ -3,12 +3,44 @@ project(hilbert)
 
 set(CMAKE_CXX_STANDARD 23)
 
-include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/model ${PROJECT_SOURCE_DIR}/src/engine)
+include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/core ${PROJECT_SOURCE_DIR}/src/engine)
 
-file(GLOB_RECURSE all_srcs "${PROJECT_SOURCE_DIR}/src/*.h"
-     "${PROJECT_SOURCE_DIR}/src/*.cpp")
-
-add_library(hilbert STATIC ${all_srcs})
+add_library(hilbert STATIC
+        src/hilbert_namespace.h
+        src/core/lazy_matrix.cpp
+        src/core/lazy_matrix.h
+        src/core/lazy_matrix_operation.h
+        src/core/lazy_matrix_operation_identity.cpp
+        src/core/lazy_matrix_operation_identity.h
+        src/core/lazy_matrix_operation_lazy_scalar_product.cpp
+        src/core/lazy_matrix_operation_lazy_scalar_product.h
+        src/core/lazy_matrix_operation_lazy_tensor_product.cpp
+        src/core/lazy_matrix_operation_lazy_tensor_product.h
+        src/core/lazy_matrix_operation_scalar_product.cpp
+        src/core/lazy_matrix_operation_scalar_product.h
+        src/core/lazy_matrix_operation_tensor_product.cpp
+        src/core/lazy_matrix_operation_tensor_product.h
+        src/core/lazy_vector.cpp
+        src/core/lazy_vector.h
+        src/core/lazy_vector_operation.h
+        src/core/lazy_vector_operation_identity.cpp
+        src/core/lazy_vector_operation_identity.h
+        src/core/lazy_vector_operation_lazy_matrix_vector_product.cpp
+        src/core/lazy_vector_operation_lazy_matrix_vector_product.h
+        src/core/lazy_vector_operation_lazy_scalar_product.cpp
+        src/core/lazy_vector_operation_lazy_scalar_product.h
+        src/core/lazy_vector_operation_lazy_tensor_product.cpp
+        src/core/lazy_vector_operation_lazy_tensor_product.h
+        src/core/lazy_vector_operation_matrix_vector_product.cpp
+        src/core/lazy_vector_operation_matrix_vector_product.h
+        src/core/lazy_vector_operation_scalar_product.cpp
+        src/core/lazy_vector_operation_scalar_product.h
+        src/core/lazy_vector_operation_tensor_product.cpp
+        src/core/lazy_vector_operation_tensor_product.h
+        src/engine/algebra_engine.cpp
+        src/engine/algebra_engine.h
+        src/engine/gate_engine.cpp
+        src/engine/gate_engine.h)
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
                                          ${CMAKE_BINARY_DIR}/lib)

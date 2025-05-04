@@ -2,18 +2,18 @@
 #define GATE_ENGINE_H
 
 #include <memory>
-#include "hilbert_namespace.h"
 #include "lazy_matrix.h"
+#include "lazy_vector.h"
 
 class GateEngine {
 public:
   GateEngine() = default;
 
-  static std::shared_ptr<LazyMatrix> apply_gate(const std::shared_ptr<LazyMatrix> &gate,
-                                                const std::shared_ptr<LazyMatrix> &state);
+  static std::unique_ptr<LazyVector> apply_gate(const std::unique_ptr<LazyMatrix> &gate,
+                                                const std::unique_ptr<LazyVector> &state);
 
-  void controlled_u(ComplexVector &control, ComplexVector &target,
-                   ComplexMatrix &u);
+  std::unique_ptr<ComplexVector> controlled_u(std::unique_ptr<ComplexVector> control, std::unique_ptr<ComplexVector> target,
+                    std::unique_ptr<ComplexMatrix> u);
 };
 
 #endif // !GATE_ENGINE_H

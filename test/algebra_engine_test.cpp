@@ -1,6 +1,4 @@
-// TODO: Fix CMake
-#include "../src/engine/algebra_engine.h"
-#include <iostream>
+#include "algebra_engine.h"
 
 bool verify_identity_matrix(const ComplexMatrix &matrix) {
   if (matrix.size() != matrix[0].size()) {

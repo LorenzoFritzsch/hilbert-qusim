@@ -1,15 +1,9 @@
-// TODO: Fix CMake
-#include "../src/model/lazy_matrix.h"
-
-#include <iostream>
-void print_matrix(const ComplexMatrix &matrix) {
-  for (auto & n : matrix) {
-    for (auto m : n) {
-      std::cout << m << " ";
-    }
-    std::cout << std::endl;
-  }
-}
+#include "lazy_matrix.h"
+#include "lazy_matrix_operation_tensor_product.h"
+#include "lazy_matrix_operation_identity.h"
+#include "lazy_matrix_operation_lazy_scalar_product.h"
+#include "lazy_matrix_operation_lazy_tensor_product.h"
+#include "lazy_matrix_operation_scalar_product.h"
 
 bool equals(const ComplexMatrix &m1, const ComplexMatrix &m2) {
   if (m1.size() != m2.size()) {
@@ -25,13 +19,14 @@ bool equals(const ComplexMatrix &m1, const ComplexMatrix &m2) {
   return true;
 }
 
-bool it_should_compute_lazy_matrix_tensorial_product() {
+bool it_should_compute_tensor_product() {
   // Given
   auto a = std::make_unique<ComplexMatrix>(hadamard_2x2);
   auto b = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation = std::make_unique<LazyMatrixOperationTensorProduct>(std::move(a), std::move(b));
 
   // When
-  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(a), std::move(b));
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
 
   // Then
   const ComplexMatrix expected = {
@@ -44,7 +39,7 @@ bool it_should_compute_lazy_matrix_tensorial_product() {
   return expected == c_lazy->get();
 }
 
-bool it_should_compute_identity_lazy_matrix_tensorial_product() {
+bool it_should_compute_identity_tensor_product() {
   // Given
   auto m_1 = std::make_unique<ComplexMatrix>(ComplexMatrix{
     {1, 0, 0, 0},
@@ -58,9 +53,10 @@ bool it_should_compute_identity_lazy_matrix_tensorial_product() {
     {0, 0, 1, 0},
     {0, 0, 0, 1}
   });
+  auto operation = std::make_unique<LazyMatrixOperationTensorProduct>(std::move(m_1), std::move(m_2));
 
   // When
-  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(m_1), std::move(m_2));
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
 
   // Then
   const ComplexMatrix expected = {
@@ -84,13 +80,36 @@ bool it_should_compute_identity_lazy_matrix_tensorial_product() {
   return equals(expected, c_lazy->get());
 }
 
-bool it_should_compute_lazy_matrix_from_lazy_matrices() {
+bool it_should_compute_lazy_matrix_from_matrix() {
   // Given
-  auto a_lazy = std::make_unique<LazyMatrix>(std::make_unique<ComplexMatrix>(identity_2x2), std::make_unique<ComplexMatrix>(identity_2x2));
-  auto b_lazy = std::make_unique<LazyMatrix>(std::make_unique<ComplexMatrix>(identity_2x2), 1);
+  auto m = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation = std::make_unique<LazyMatrixOperationIdentity>(std::move(m));
 
   // When
-  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(a_lazy), std::move(b_lazy));
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
+
+  // Then
+  const auto expected = identity_2x2;
+  return equals(expected, c_lazy->get());
+}
+
+bool it_should_compute_lazy_tensor_product() {
+  // Given
+  auto a = std::make_unique<ComplexMatrix>(ComplexMatrix({
+    {1, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
+  }));
+  auto operation_a = std::make_unique<LazyMatrixOperationIdentity>(std::move(a));
+  auto a_lazy = std::make_unique<LazyMatrix>(std::move(operation_a));
+  auto b = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation_b = std::make_unique<LazyMatrixOperationIdentity>(std::move(b));
+  auto b_lazy = std::make_unique<LazyMatrix>(std::move(operation_b));
+  auto operation = std::make_unique<LazyMatrixOperationLazyTensorProduct>(std::move(a_lazy), std::move(b_lazy));
+
+  // When
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
 
   // Then
   const ComplexMatrix expected = {
@@ -106,13 +125,14 @@ bool it_should_compute_lazy_matrix_from_lazy_matrices() {
   return equals(expected, c_lazy->get());
 }
 
-bool it_should_compute_lazy_matrix_scalar_product() {
+bool it_should_compute_scalar_product() {
   // Given
   auto m = std::make_unique<ComplexMatrix>(identity_2x2);
   constexpr Complex k = {1, 4};
+  auto operation = std::make_unique<LazyMatrixOperationScalarProduct>(std::move(m), std::make_unique<Complex>(k));
 
   // When
-  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(m), k);
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
 
   // Then
   const ComplexMatrix expected = {
@@ -122,18 +142,43 @@ bool it_should_compute_lazy_matrix_scalar_product() {
   return equals(expected, c_lazy->get());
 }
 
+bool it_should_compute_lazy_scalar_product() {
+  // Given
+  auto a = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation_a = std::make_unique<LazyMatrixOperationIdentity>(std::move(a));
+  auto a_lazy = std::make_unique<LazyMatrix>(std::move(operation_a));
+  constexpr Complex k = {1, 4};
+  auto operation = std::make_unique<LazyMatrixOperationLazyScalarProduct>(std::move(a_lazy), std::make_unique<Complex>(k));
+
+  // When
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
+
+  //
+  const ComplexMatrix expected = {
+    {k, 0},
+    {0, k}
+  };
+  return equals(expected, c_lazy->get());
+}
+
 int main() {
   int failed = 0;
-  if (!it_should_compute_lazy_matrix_tensorial_product()) {
+  if (!it_should_compute_tensor_product()) {
     failed++;
   }
-  if (!it_should_compute_identity_lazy_matrix_tensorial_product()) {
+  if (!it_should_compute_identity_tensor_product()) {
     failed++;
   }
-  if (!it_should_compute_lazy_matrix_scalar_product()) {
+  if (!it_should_compute_scalar_product()) {
     failed++;
   }
-  if (!it_should_compute_lazy_matrix_from_lazy_matrices()) {
+  if (!it_should_compute_lazy_matrix_from_matrix()) {
+    failed++;
+  }
+  if (!it_should_compute_lazy_tensor_product()) {
+    failed++;
+  }
+  if (!it_should_compute_lazy_scalar_product()) {
     failed++;
   }
   return failed == 0 ? 0 : 1;

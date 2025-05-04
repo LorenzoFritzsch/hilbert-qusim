@@ -1,5 +1,12 @@
 #include "algebra_engine.h"
 
+#include "lazy_matrix_operation_identity.h"
+#include "lazy_matrix_operation_lazy_tensor_product.h"
+
+std::unique_ptr<LazyMatrix> AlgebraEngine::to_lazy(std::unique_ptr<ComplexMatrix> a) {
+  return std::make_unique<LazyMatrix>(std::make_unique<LazyMatrixOperationIdentity>(std::move(a)));
+}
+
 ComplexMatrix AlgebraEngine::conjugate_transpose(const ComplexMatrix &mat) {
   const auto initial_n = mat.size();
   const auto initial_m = mat.begin()->size();
@@ -40,11 +47,15 @@ Complex AlgebraEngine::inner_product(const ComplexMatrix &a, const ComplexMatrix
 }
 
 std::unique_ptr<LazyMatrix> AlgebraEngine::tensorial_product(std::unique_ptr<ComplexMatrix> a, const int times) {
-  const auto lazy_a = std::make_shared<LazyMatrix>(std::move(a), 1);
-  auto result = std::make_unique<LazyMatrix>(*lazy_a);
-  for (int _ = 1; _ < times; _++) {
-    auto a_u = std::make_unique<LazyMatrix>(*lazy_a);
-    result = std::make_unique<LazyMatrix>(std::move(result), std::move(a_u));
+  auto lazy_a = to_lazy(std::move(a));
+  if (times == 1) {
+    return lazy_a;
   }
-  return result;
+  auto operation = std::make_unique<LazyMatrixOperationLazyTensorProduct>(
+    std::make_unique<LazyMatrix>(*lazy_a), std::make_unique<LazyMatrix>(*lazy_a));
+  for (int _ = 2; _ < times; _++) {
+    operation = std::make_unique<LazyMatrixOperationLazyTensorProduct>(
+      std::make_unique<LazyMatrix>(std::move(operation)), std::make_unique<LazyMatrix>(*lazy_a));
+  }
+  return std::make_unique<LazyMatrix>(std::move(operation));
 }

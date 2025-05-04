@@ -9,6 +9,8 @@ class AlgebraEngine {
 public:
   AlgebraEngine() = default;
 
+  static std::unique_ptr<LazyMatrix> to_lazy(std::unique_ptr<ComplexMatrix> a);
+
   static ComplexMatrix conjugate_transpose(const ComplexMatrix &mat);
 
   static ComplexVector multiply(const ComplexVector &v, const Complex &k);
