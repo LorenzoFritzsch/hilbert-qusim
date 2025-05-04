@@ -17,11 +17,7 @@ public:
 
 protected:
   static int get_index(const int n, const int d) {
-    int k = 0;
-    while ((k + 1) * d <= n) {
-      k++;
-    }
-    return k;
+    return n / d;
   }
 };
 
