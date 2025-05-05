@@ -1,9 +1,12 @@
 #include "lazy_matrix.h"
 #include "lazy_matrix_operation_tensor_product.h"
 #include "lazy_matrix_operation_identity.h"
+#include "lazy_matrix_operation_lazy_outer_product.h"
 #include "lazy_matrix_operation_lazy_scalar_product.h"
 #include "lazy_matrix_operation_lazy_tensor_product.h"
 #include "lazy_matrix_operation_scalar_product.h"
+#include "lazy_vector.h"
+#include "lazy_vector_operation_identity.h"
 
 bool equals(const ComplexMatrix &m1, const ComplexMatrix &m2) {
   if (m1.size() != m2.size()) {
@@ -161,6 +164,25 @@ bool it_should_compute_lazy_scalar_product() {
   return equals(expected, c_lazy->get());
 }
 
+bool it_should_compute_lazy_outer_product() {
+  // Given
+  auto v1 = std::make_unique<ComplexVector>(ket_0);
+  auto v1_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationIdentity>(std::move(v1)));
+  auto v2 = std::make_unique<ComplexVector>(ket_1);
+  auto v2_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationIdentity>(std::move(v2)));
+  auto operation = std::make_unique<LazyMatrixOperationLazyOuterProduct>(std::move(v1_lazy), std::move(v2_lazy));
+
+  // When
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
+
+  // Then
+  const ComplexMatrix expected = {
+    {0, 1},
+    {0, 0}
+  };
+  return equals(expected, c_lazy->get());
+}
+
 int main() {
   int failed = 0;
   if (!it_should_compute_tensor_product()) {
@@ -179,6 +201,9 @@ int main() {
     failed++;
   }
   if (!it_should_compute_lazy_scalar_product()) {
+    failed++;
+  }
+  if (!it_should_compute_lazy_outer_product()) {
     failed++;
   }
   return failed == 0 ? 0 : 1;

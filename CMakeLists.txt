@@ -40,7 +40,9 @@ add_library(hilbert STATIC
         src/engine/algebra_engine.cpp
         src/engine/algebra_engine.h
         src/engine/gate_engine.cpp
-        src/engine/gate_engine.h)
+        src/engine/gate_engine.h
+        src/core/lazy_matrix_operation_lazy_outer_product.cpp
+        src/core/lazy_matrix_operation_lazy_outer_product.h)
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
                                          ${CMAKE_BINARY_DIR}/lib)
