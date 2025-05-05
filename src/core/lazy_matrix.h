@@ -10,8 +10,7 @@ public:
     : operation_(std::move(operation)) {
     const auto c_row_size = operation_->c_row_size();
     const auto c_column_size = operation_->c_column_size();
-    c_ = std::make_unique<ComplexOptionalMatrix>(
-      c_row_size, std::vector<std::optional<std::complex<double> > >(c_column_size, std::nullopt));
+    c_ = std::make_unique<ComplexOptionalMatrix>(c_row_size, ComplexOptionalVector(c_column_size, std::nullopt));
   }
 
   LazyMatrix(const LazyMatrix &other)
