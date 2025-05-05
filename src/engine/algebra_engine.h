@@ -17,8 +17,6 @@ public:
 
   static Complex inner_product(const ComplexVector &a, const ComplexVector &b);
 
-  static Complex inner_product(const ComplexMatrix &a, const ComplexMatrix &b);
-
   static std::unique_ptr<LazyMatrix> tensorial_product(std::unique_ptr<ComplexMatrix> a, int times);
 };
 

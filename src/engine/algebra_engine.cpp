@@ -31,17 +31,10 @@ ComplexVector AlgebraEngine::multiply(const ComplexVector &v, const Complex &k) 
 }
 
 Complex AlgebraEngine::inner_product(const ComplexVector &a, const ComplexVector &b) {
-  const auto aMatrix = ComplexMatrix(1, a);
-  const auto bMatrix = ComplexMatrix(1, b);
-  return inner_product(aMatrix, bMatrix);
-}
-
-Complex AlgebraEngine::inner_product(const ComplexMatrix &a, const ComplexMatrix &b) {
   Complex result = 0;
-  for (int i = 0; i < a.size(); i++) {
-    for (int j = 0; j < a[i].size(); j++) {
-      result += std::conj(a[i][j]) * b[i][j];
-    }
+  const auto max = std::min(a.size(), b.size());
+  for (int i = 0; i < max; i++) {
+    result += a[i] * b[i];
   }
   return result;
 }
