@@ -2,7 +2,7 @@
 #define LAZY_VECTOR_OPERATION_MATRIX_VECTOR_PRODUCT_H
 #include "lazy_vector_operation.h"
 
-class LazyVectorOperationMatrixVectorProduct : public LazyVectorOperation {
+class LazyVectorOperationMatrixVectorProduct final : public LazyVectorOperation {
 public:
   LazyVectorOperationMatrixVectorProduct(std::unique_ptr<ComplexMatrix> m, std::unique_ptr<ComplexVector> v)
     : m_(std::move(m)),

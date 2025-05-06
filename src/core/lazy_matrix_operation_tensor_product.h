@@ -2,7 +2,7 @@
 #define LAZY_MATRIX_OPERATION_TENSOR_PRODUCT_H
 #include "lazy_matrix_operation.h"
 
-class LazyMatrixOperationTensorProduct : public LazyMatrixOperation {
+class LazyMatrixOperationTensorProduct final : public LazyMatrixOperation {
 public:
   LazyMatrixOperationTensorProduct(std::unique_ptr<ComplexMatrix> a, std::unique_ptr<ComplexMatrix> b)
     : a_(std::move(a)),

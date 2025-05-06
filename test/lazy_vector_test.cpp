@@ -1,7 +1,7 @@
 #include "lazy_vector.h"
 #include "lazy_matrix.h"
-#include "lazy_matrix_operation_identity.h"
-#include "lazy_vector_operation_identity.h"
+#include "lazy_matrix_operation_cast.h"
+#include "lazy_vector_operation_cast.h"
 #include "lazy_vector_operation_lazy_matrix_vector_product.h"
 #include "lazy_vector_operation_lazy_scalar_product.h"
 #include "lazy_vector_operation_lazy_tensor_product.h"
@@ -22,7 +22,7 @@ bool equals(const ComplexVector& lhs, const ComplexVector& rhs) {
 }
 
 std::unique_ptr<LazyVector> to_lazy(std::unique_ptr<ComplexVector> v) {
-  auto operation = std::make_unique<LazyVectorOperationIdentity>(std::move(v));
+  auto operation = std::make_unique<LazyVectorOperationCast>(std::move(v));
   return std::make_unique<LazyVector>(std::move(operation));
 }
 
@@ -44,7 +44,7 @@ bool it_should_compute_matrix_vector_product() {
 bool it_should_compute_lazy_matrix_vector_product() {
   // Given
   auto m = std::make_unique<ComplexMatrix>(pauli_x);
-  auto operation_m = std::make_unique<LazyMatrixOperationIdentity>(std::move(m));
+  auto operation_m = std::make_unique<LazyMatrixOperationCast>(std::move(m));
   auto matrix = std::make_unique<LazyMatrix>(std::move(operation_m));
   auto vector = to_lazy(std::make_unique<ComplexVector>(ket_0));
   auto operation = std::make_unique<LazyVectorOperationLazyMatrixVectorProduct>(std::move(matrix), std::move(vector));

@@ -2,9 +2,9 @@
 #define LAZY_VECTOR_OPERATION_IDENTITY_H
 #include "lazy_vector_operation.h"
 
-class LazyVectorOperationIdentity : public LazyVectorOperation {
+class LazyVectorOperationCast final : public LazyVectorOperation {
 public:
-  explicit LazyVectorOperationIdentity(std::unique_ptr<ComplexVector> v)
+  explicit LazyVectorOperationCast(std::unique_ptr<ComplexVector> v)
     : v_(std::move(v)) {
   }
 

@@ -2,9 +2,9 @@
 #define LAZY_MATRIX_OPERATION_IDENTITY_H
 #include "lazy_matrix_operation.h"
 
-class LazyMatrixOperationIdentity : public LazyMatrixOperation {
+class LazyMatrixOperationCast final : public LazyMatrixOperation {
 public:
-  explicit LazyMatrixOperationIdentity(std::unique_ptr<ComplexMatrix> m)
+  explicit LazyMatrixOperationCast(std::unique_ptr<ComplexMatrix> m)
     : m_(std::move(m)) {
   }
 

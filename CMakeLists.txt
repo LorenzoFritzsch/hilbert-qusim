@@ -10,8 +10,8 @@ add_library(hilbert STATIC
         src/core/lazy_matrix.cpp
         src/core/lazy_matrix.h
         src/core/lazy_matrix_operation.h
-        src/core/lazy_matrix_operation_identity.cpp
-        src/core/lazy_matrix_operation_identity.h
+        src/core/lazy_matrix_operation_cast.cpp
+        src/core/lazy_matrix_operation_cast.h
         src/core/lazy_matrix_operation_lazy_scalar_product.cpp
         src/core/lazy_matrix_operation_lazy_scalar_product.h
         src/core/lazy_matrix_operation_lazy_tensor_product.cpp
@@ -23,8 +23,8 @@ add_library(hilbert STATIC
         src/core/lazy_vector.cpp
         src/core/lazy_vector.h
         src/core/lazy_vector_operation.h
-        src/core/lazy_vector_operation_identity.cpp
-        src/core/lazy_vector_operation_identity.h
+        src/core/lazy_vector_operation_cast.cpp
+        src/core/lazy_vector_operation_cast.h
         src/core/lazy_vector_operation_lazy_matrix_vector_product.cpp
         src/core/lazy_vector_operation_lazy_matrix_vector_product.h
         src/core/lazy_vector_operation_lazy_scalar_product.cpp

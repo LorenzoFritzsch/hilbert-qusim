@@ -3,7 +3,7 @@
 #include "lazy_vector.h"
 #include "lazy_vector_operation.h"
 
-class LazyVectorOperationLazyTensorProduct : public LazyVectorOperation {
+class LazyVectorOperationLazyTensorProduct final : public LazyVectorOperation {
 public:
   LazyVectorOperationLazyTensorProduct(std::unique_ptr<LazyVector> v1, std::unique_ptr<LazyVector> v2)
     : v1_(std::move(v1)),

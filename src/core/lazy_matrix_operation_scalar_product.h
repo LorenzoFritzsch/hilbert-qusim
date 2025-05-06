@@ -2,7 +2,7 @@
 #define LAZY_MATRIX_OPERATION_SCALAR_PRODUCT_H
 #include "lazy_matrix_operation.h"
 
-class LazyMatrixOperationScalarProduct : public LazyMatrixOperation {
+class LazyMatrixOperationScalarProduct final : public LazyMatrixOperation {
 public:
   LazyMatrixOperationScalarProduct(std::unique_ptr<ComplexMatrix> m, std::unique_ptr<Complex> k)
     : m_(std::move(m)),

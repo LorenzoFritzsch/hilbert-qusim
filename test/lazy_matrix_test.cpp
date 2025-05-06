@@ -1,12 +1,12 @@
 #include "lazy_matrix.h"
 #include "lazy_matrix_operation_tensor_product.h"
-#include "lazy_matrix_operation_identity.h"
+#include "lazy_matrix_operation_cast.h"
 #include "lazy_matrix_operation_lazy_outer_product.h"
 #include "lazy_matrix_operation_lazy_scalar_product.h"
 #include "lazy_matrix_operation_lazy_tensor_product.h"
 #include "lazy_matrix_operation_scalar_product.h"
 #include "lazy_vector.h"
-#include "lazy_vector_operation_identity.h"
+#include "lazy_vector_operation_cast.h"
 
 bool equals(const ComplexMatrix &m1, const ComplexMatrix &m2) {
   if (m1.size() != m2.size()) {
@@ -86,7 +86,7 @@ bool it_should_compute_identity_tensor_product() {
 bool it_should_compute_lazy_matrix_from_matrix() {
   // Given
   auto m = std::make_unique<ComplexMatrix>(identity_2x2);
-  auto operation = std::make_unique<LazyMatrixOperationIdentity>(std::move(m));
+  auto operation = std::make_unique<LazyMatrixOperationCast>(std::move(m));
 
   // When
   const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
@@ -104,10 +104,10 @@ bool it_should_compute_lazy_tensor_product() {
     {0, 0, 1, 0},
     {0, 0, 0, 1}
   }));
-  auto operation_a = std::make_unique<LazyMatrixOperationIdentity>(std::move(a));
+  auto operation_a = std::make_unique<LazyMatrixOperationCast>(std::move(a));
   auto a_lazy = std::make_unique<LazyMatrix>(std::move(operation_a));
   auto b = std::make_unique<ComplexMatrix>(identity_2x2);
-  auto operation_b = std::make_unique<LazyMatrixOperationIdentity>(std::move(b));
+  auto operation_b = std::make_unique<LazyMatrixOperationCast>(std::move(b));
   auto b_lazy = std::make_unique<LazyMatrix>(std::move(operation_b));
   auto operation = std::make_unique<LazyMatrixOperationLazyTensorProduct>(std::move(a_lazy), std::move(b_lazy));
 
@@ -148,7 +148,7 @@ bool it_should_compute_scalar_product() {
 bool it_should_compute_lazy_scalar_product() {
   // Given
   auto a = std::make_unique<ComplexMatrix>(identity_2x2);
-  auto operation_a = std::make_unique<LazyMatrixOperationIdentity>(std::move(a));
+  auto operation_a = std::make_unique<LazyMatrixOperationCast>(std::move(a));
   auto a_lazy = std::make_unique<LazyMatrix>(std::move(operation_a));
   constexpr Complex k = {1, 4};
   auto operation = std::make_unique<LazyMatrixOperationLazyScalarProduct>(std::move(a_lazy), std::make_unique<Complex>(k));
@@ -167,9 +167,9 @@ bool it_should_compute_lazy_scalar_product() {
 bool it_should_compute_lazy_outer_product() {
   // Given
   auto v1 = std::make_unique<ComplexVector>(ket_0);
-  auto v1_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationIdentity>(std::move(v1)));
+  auto v1_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationCast>(std::move(v1)));
   auto v2 = std::make_unique<ComplexVector>(ket_1);
-  auto v2_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationIdentity>(std::move(v2)));
+  auto v2_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationCast>(std::move(v2)));
   auto operation = std::make_unique<LazyMatrixOperationLazyOuterProduct>(std::move(v1_lazy), std::move(v2_lazy));
 
   // When

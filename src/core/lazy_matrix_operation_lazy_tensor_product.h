@@ -3,7 +3,7 @@
 #include "lazy_matrix.h"
 #include "lazy_matrix_operation.h"
 
-class LazyMatrixOperationLazyTensorProduct : public LazyMatrixOperation {
+class LazyMatrixOperationLazyTensorProduct final : public LazyMatrixOperation {
 public:
   LazyMatrixOperationLazyTensorProduct(std::unique_ptr<LazyMatrix> a, std::unique_ptr<LazyMatrix> b)
     : a_(std::move(a)),

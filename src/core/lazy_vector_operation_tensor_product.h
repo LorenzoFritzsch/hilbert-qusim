@@ -2,7 +2,7 @@
 #define LAZY_VECTOR_OPERATION_TENSOR_PRODUCT_H
 #include "lazy_vector_operation.h"
 
-class LazyVectorOperationTensorProduct : public LazyVectorOperation {
+class LazyVectorOperationTensorProduct final : public LazyVectorOperation {
 public:
   LazyVectorOperationTensorProduct(std::unique_ptr<ComplexVector> v1, std::unique_ptr<ComplexVector> v2)
     : v1_(std::move(v1)),

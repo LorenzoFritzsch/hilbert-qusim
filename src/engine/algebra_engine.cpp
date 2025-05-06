@@ -1,10 +1,10 @@
 #include "algebra_engine.h"
 
-#include "lazy_matrix_operation_identity.h"
+#include "lazy_matrix_operation_cast.h"
 #include "lazy_matrix_operation_lazy_tensor_product.h"
 
 std::unique_ptr<LazyMatrix> AlgebraEngine::to_lazy(std::unique_ptr<ComplexMatrix> a) {
-  return std::make_unique<LazyMatrix>(std::make_unique<LazyMatrixOperationIdentity>(std::move(a)));
+  return std::make_unique<LazyMatrix>(std::make_unique<LazyMatrixOperationCast>(std::move(a)));
 }
 
 ComplexMatrix AlgebraEngine::conjugate_transpose(const ComplexMatrix &mat) {

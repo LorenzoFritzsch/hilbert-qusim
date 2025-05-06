@@ -4,7 +4,7 @@
 #include "lazy_vector.h"
 #include "lazy_vector_operation.h"
 
-class LazyVectorOperationLazyMatrixVectorProduct : public LazyVectorOperation {
+class LazyVectorOperationLazyMatrixVectorProduct final : public LazyVectorOperation {
 public:
   LazyVectorOperationLazyMatrixVectorProduct(std::unique_ptr<LazyMatrix> m, std::unique_ptr<LazyVector> v)
     : m_(std::move(m)),
