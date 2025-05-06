@@ -55,13 +55,13 @@ bool it_should_compute_inner_product_between_two_vectors() {
   const auto complex_vector_c = ComplexVector(1, 0);
 
   // When
-  const auto result_a_scalar_b = AlgebraEngine::inner_product(complex_vector_a, complex_vector_b);
-  const auto result_a_scalar_c = AlgebraEngine::inner_product(complex_vector_a, complex_vector_c);
+  const auto result_a_b = AlgebraEngine::inner_product(complex_vector_a, complex_vector_b);
+  const auto result_a_c = AlgebraEngine::inner_product(complex_vector_a, complex_vector_c);
 
   // Then
-  const bool is_scalar_between_orthogonal_vectors_zero = result_a_scalar_c == Complex(0, 0);
-  const bool is_scalar_between_equal_vectors_one = result_a_scalar_b == Complex(1, 0);
-  return is_scalar_between_orthogonal_vectors_zero && is_scalar_between_equal_vectors_one;
+  const bool is_inner_product_between_orthogonal_vectors_zero = result_a_c == Complex(0, 0);
+  const bool is_inner_product_between_equal_vectors_one = result_a_b == Complex(1, 0);
+  return is_inner_product_between_orthogonal_vectors_zero && is_inner_product_between_equal_vectors_one;
 }
 
 bool it_should_compute_matrix_power() {
