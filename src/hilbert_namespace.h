@@ -5,15 +5,15 @@
 #include <complex>
 #include <optional>
 
-using Complex = std::complex<float>;
+using Complex = std::complex<double>;
 
 using ComplexVector = std::vector<Complex>;
 
 using ComplexMatrix = std::vector<ComplexVector>;
 
-using ComplexOptionalMatrix = std::vector<std::vector<std::optional<std::complex<float>>>>;
+using ComplexOptionalMatrix = std::vector<std::vector<std::optional<Complex>>>;
 
-using ComplexOptionalVector = std::vector<std::optional<std::complex<float>>>;
+using ComplexOptionalVector = std::vector<std::optional<Complex>>;
 
 const ComplexVector ket_0 = {1, 0};
 const ComplexVector ket_1 = {0, 1};
