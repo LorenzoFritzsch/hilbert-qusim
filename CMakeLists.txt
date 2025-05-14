@@ -42,7 +42,11 @@ add_library(hilbert STATIC
         src/engine/gate_engine.cpp
         src/engine/gate_engine.h
         src/core/lazy_matrix_operation_lazy_outer_product.cpp
-        src/core/lazy_matrix_operation_lazy_outer_product.h)
+        src/core/lazy_matrix_operation_lazy_outer_product.h
+        src/core/qubit.cpp
+        src/core/qubit.h
+        src/core/lazy_matrix_operation_lazy_sum.cpp
+        src/core/lazy_matrix_operation_lazy_sum.h)
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
                                          ${CMAKE_BINARY_DIR}/lib)
@@ -63,3 +67,11 @@ add_test(NAME "lazy_matrix_test" COMMAND lazy_matrix_test)
 add_executable(lazy_vector_test "${TEST_DIR}/lazy_vector_test.cpp")
 target_link_libraries(lazy_vector_test hilbert)
 add_test(NAME "lazy_vector_test" COMMAND lazy_vector_test)
+
+add_executable(gate_engine_test "${TEST_DIR}/gate_engine_test.cpp")
+target_link_libraries(gate_engine_test hilbert)
+add_test(NAME "gate_engine_test" COMMAND gate_engine_test)
+
+add_executable(qubit_test "${TEST_DIR}/qubit_test.cpp")
+target_link_libraries(qubit_test hilbert)
+add_test(NAME "qubit_test" COMMAND qubit_test)

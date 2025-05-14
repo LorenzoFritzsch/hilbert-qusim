@@ -4,16 +4,17 @@
 #include <memory>
 #include "lazy_matrix.h"
 #include "lazy_vector.h"
+#include "qubit.h"
 
 class GateEngine {
 public:
   GateEngine() = default;
 
-  static std::unique_ptr<LazyVector> apply_gate(const std::unique_ptr<LazyMatrix> &gate,
-                                                const std::unique_ptr<LazyVector> &state);
+  static std::unique_ptr<LazyVector> apply_gate(std::unique_ptr<LazyMatrix> gate,
+                                                std::unique_ptr<LazyVector> state);
 
-  std::unique_ptr<ComplexVector> controlled_u(std::unique_ptr<ComplexVector> control, std::unique_ptr<ComplexVector> target,
-                    std::unique_ptr<ComplexMatrix> u);
+  static std::unique_ptr<Qubit> controlled_u(const std::unique_ptr<Qubit> &control, const std::unique_ptr<Qubit> &target,
+                                             std::unique_ptr<ComplexMatrix> u);
 };
 
 #endif // !GATE_ENGINE_H

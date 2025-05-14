@@ -15,6 +15,10 @@ using ComplexOptionalMatrix = std::vector<std::vector<std::optional<Complex>>>;
 
 using ComplexOptionalVector = std::vector<std::optional<Complex>>;
 
+inline bool approxEqual(const Complex& a, const Complex& b, const double tol = 1e-10) {
+  return std::abs(a - b) < tol;
+}
+
 const ComplexVector ket_0 = {1, 0};
 const ComplexVector ket_1 = {0, 1};
 

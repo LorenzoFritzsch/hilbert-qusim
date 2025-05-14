@@ -18,6 +18,8 @@ public:
   static Complex inner_product(const ComplexVector &a, const ComplexVector &b);
 
   static std::unique_ptr<LazyMatrix> tensorial_product(std::unique_ptr<ComplexMatrix> a, int times);
+
+  static bool is_unitary(const ComplexMatrix &a);
 };
 
 #endif // !ALGEBRA_ENGINE_H

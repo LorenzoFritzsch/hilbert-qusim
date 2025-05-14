@@ -3,6 +3,7 @@
 #include "lazy_matrix_operation_cast.h"
 #include "lazy_matrix_operation_lazy_outer_product.h"
 #include "lazy_matrix_operation_lazy_scalar_product.h"
+#include "lazy_matrix_operation_lazy_sum.h"
 #include "lazy_matrix_operation_lazy_tensor_product.h"
 #include "lazy_matrix_operation_scalar_product.h"
 #include "lazy_vector.h"
@@ -183,6 +184,27 @@ bool it_should_compute_lazy_outer_product() {
   return equals(expected, c_lazy->get());
 }
 
+bool it_should_compute_lazy_sum() {
+  // Given
+  auto m1 = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation_m1 = std::make_unique<LazyMatrixOperationCast>(std::move(m1));
+  auto m1_lazy = std::make_unique<LazyMatrix>(std::move(operation_m1));
+  auto m2 = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto operation_m2 = std::make_unique<LazyMatrixOperationCast>(std::move(m2));
+  auto m2_lazy = std::make_unique<LazyMatrix>(std::move(operation_m2));
+  auto operation = std::make_unique<LazyMatrixOperationLazySum>(std::move(m1_lazy), std::move(m2_lazy));
+
+  // When
+  const auto c_lazy = std::make_unique<LazyMatrix>(std::move(operation));
+
+  // Then
+  const ComplexMatrix expected = {
+    {2, 0},
+    {0, 2}
+  };
+  return equals(expected, c_lazy->get());
+}
+
 int main() {
   int failed = 0;
   if (!it_should_compute_tensor_product()) {
@@ -204,6 +226,9 @@ int main() {
     failed++;
   }
   if (!it_should_compute_lazy_outer_product()) {
+    failed++;
+  }
+  if (!it_should_compute_lazy_sum()) {
     failed++;
   }
   return failed == 0 ? 0 : 1;

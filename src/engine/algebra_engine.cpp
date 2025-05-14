@@ -52,3 +52,25 @@ std::unique_ptr<LazyMatrix> AlgebraEngine::tensorial_product(std::unique_ptr<Com
   }
   return std::make_unique<LazyMatrix>(std::move(operation));
 }
+
+bool AlgebraEngine::is_unitary(const ComplexMatrix &a) {
+  if (a.size() != a.begin()->size()) {
+    return false;
+  }
+
+  for (int m = 0; m < a.size(); m++) {
+    for (int n = 0; n < a.begin()->size(); n++) {
+      auto v = Complex(0);
+      for (auto & k : a) {
+        v = std::conj(k.at(m)) * k.at(n) + v;
+      }
+      if (m == n && !approxEqual(v, Complex(1))) {
+        return false;
+      }
+      if (m != n && !approxEqual(v, Complex(0))) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

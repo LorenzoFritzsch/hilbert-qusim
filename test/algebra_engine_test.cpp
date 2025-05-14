@@ -78,6 +78,17 @@ bool it_should_compute_matrix_power() {
          && static_cast<int>(actual.size()) == std::pow(2, times);
 }
 
+bool it_should_verify_unitarity() {
+  // Given
+  const auto a = hadamard_2x2;
+
+  // When
+  const auto result = AlgebraEngine::is_unitary(a);
+
+  // Then
+  return result;
+}
+
 int main() {
   int failed = 0;
 
@@ -91,6 +102,9 @@ int main() {
     failed += 1;
   }
   if (!it_should_compute_matrix_power()) {
+    failed += 1;
+  }
+  if (!it_should_verify_unitarity()) {
     failed += 1;
   }
 
