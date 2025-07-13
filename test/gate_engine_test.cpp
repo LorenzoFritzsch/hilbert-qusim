@@ -1,35 +1,33 @@
+#include "complex_vectorised_matrix.h"
 #include "gate_engine.h"
-
-#include "lazy_matrix_operation_cast.h"
-#include "lazy_vector_operation_cast.h"
+#include "hilbert_namespace_test.h"
+#include <memory>
 
 bool it_should_apply_gate() {
   // Given
-  auto gate = std::make_unique<ComplexMatrix>(pauli_x);
-  auto gate_lazy = std::make_unique<LazyMatrix>(std::make_unique<LazyMatrixOperationCast>(std::move(gate)));
-  auto state = std::make_unique<ComplexVector>(ket_0);
-  auto state_lazy = std::make_unique<LazyVector>(std::make_unique<LazyVectorOperationCast>(std::move(state)));
+  auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
+  auto state = std::make_unique<ComplexVectMatrix>(ket_0);
 
   // When
-  const auto result = GateEngine::apply_gate(std::move(gate_lazy), std::move(state_lazy));
+  const auto result = GateEngine::apply_gate(std::move(gate), std::move(state));
 
   // Then
-  const auto expected = ket_1;
-  return expected == result->get();
+  return are_matrices_equal(ComplexVectMatrix(ket_1), *result);
 }
 
 bool it_should_apply_controlled_gate() {
   // Given
-  const auto control = std::make_unique<Qubit>(0, 1);
-  const auto target = std::make_unique<Qubit>(1, 0);
-  auto gate = std::make_unique<ComplexMatrix>(pauli_x);
+  auto control = std::make_unique<Qubit>(0, 1);
+  auto target = std::make_unique<Qubit>(1, 0);
+  auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
 
   // When
-  const auto result = GateEngine::controlled_u(control, target, std::move(gate));
+  auto result = GateEngine::controlled_u(std::move(control), std::move(target),
+                                         std::move(gate));
 
   // Then
   const auto expected = ket_1;
-  return expected == *result->to_vector();
+  return are_matrices_equal(ComplexVectMatrix(ket_1), *result->to_vector());
 }
 
 int main() {

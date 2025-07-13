@@ -1,17 +1,29 @@
 #include "algebra_engine.h"
+#include "complex_vectorised_matrix.h"
+#include "hilbert_namespace.h"
+#include "hilbert_namespace_test.h"
+#include <initializer_list>
+#include <iostream>
+#include <memory>
 
-bool verify_identity_matrix(const ComplexMatrix &matrix) {
-  if (matrix.size() != matrix[0].size()) {
+#define PERFORMANCE_TESTING 0
+
+#if PERFORMANCE_TESTING
+#include <chrono>
+#endif
+
+bool verify_identity_matrix(const ComplexVectMatrix &matrix) {
+  if (matrix.row_size() != matrix.column_size()) {
     return false;
   }
-  for (auto n = 0; n < matrix.size(); n++) {
-    for (auto m = 0; m < matrix.size(); m++) {
-      if (n == m) {
-        if (matrix[n][m] != Complex(1, 0)) {
+  for (auto m = 0; m < matrix.row_size(); m++) {
+    for (auto n = 0; n < matrix.column_size(); n++) {
+      if (m == n) {
+        if (matrix.get(m, n) != Complex(1, 0)) {
           return false;
         }
       } else {
-        if (matrix[n][m] != Complex(0, 0)) {
+        if (matrix.get(m, n) != Complex(0, 0)) {
           return false;
         }
       }
@@ -20,70 +32,215 @@ bool verify_identity_matrix(const ComplexMatrix &matrix) {
   return true;
 }
 
+#if PERFORMANCE_TESTING
+std::string format_with_dots(const unsigned long long number) {
+  std::string num = std::to_string(number);
+  int insertPosition = static_cast<int>(num.length()) - 3;
+
+  while (insertPosition > 0) {
+    num.insert(insertPosition, ".");
+    insertPosition -= 3;
+  }
+
+  return num;
+}
+#endif
+
 bool it_should_compute_conjugate_transpose() {
   // Given
-  auto complex_matrix = ComplexMatrix(2, ComplexVector(2, 1));
-  complex_matrix[0][0] = Complex(1, 1);
-  complex_matrix[0][1] = Complex(1, 2);
-  complex_matrix[1][0] = Complex(2, 1);
-  complex_matrix[1][1] = Complex(2, 2);
+  ComplexMatrix complex_mat = {{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}};
+  auto mat = std::make_unique<ComplexVectMatrix>(ComplexMatrix(complex_mat));
 
   // When
-  auto conjugate_transpose = AlgebraEngine::conjugate_transpose(complex_matrix);
-  conjugate_transpose = AlgebraEngine::conjugate_transpose(conjugate_transpose);
-
-  // Then - Applying the conjugate transpose twice should return the original matrix
-  return complex_matrix == conjugate_transpose;
-}
-
-bool it_should_multiply_vector_by_scalar() {
-  // Given
-  const auto complex_vector = ComplexVector(2, 1);
-  constexpr auto scalar = Complex(2, 2);
-
-  // When
-  const auto result = AlgebraEngine::multiply(complex_vector, scalar);
+  auto result = AlgebraEngine::conjugate_transpose(std::move(mat));
 
   // Then
-  return result[0] == Complex(2, 2) && result[1] == Complex(2, 2);
+  ComplexMatrix expected = {{{1, -1}, {2, -1}}, {{1, -2}, {2, -2}}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
-bool it_should_compute_inner_product_between_two_vectors() {
+bool it_should_compute_inner_product() {
   // Given
-  const auto complex_vector_a = ComplexVector(1, 1);
-  const auto complex_vector_b = ComplexVector(1, 1);
-  const auto complex_vector_c = ComplexVector(1, 0);
+  auto complex_vector_a =
+      std::make_unique<ComplexVectMatrix>(ComplexVector(1, 1));
+  auto complex_vector_b =
+      std::make_unique<ComplexVectMatrix>(ComplexVector(1, 1));
+  auto complex_vector_c =
+      std::make_unique<ComplexVectMatrix>(ComplexVector(1, 1));
+  auto complex_vector_d =
+      std::make_unique<ComplexVectMatrix>(ComplexVector(1, 0));
 
   // When
-  const auto result_a_b = AlgebraEngine::inner_product(complex_vector_a, complex_vector_b);
-  const auto result_a_c = AlgebraEngine::inner_product(complex_vector_a, complex_vector_c);
+  const auto result_a_b = AlgebraEngine::inner_product(
+      std::move(complex_vector_a), std::move(complex_vector_b));
+  const auto result_a_c = AlgebraEngine::inner_product(
+      std::move(complex_vector_c), std::move(complex_vector_d));
 
   // Then
-  const bool is_inner_product_between_orthogonal_vectors_zero = result_a_c == Complex(0, 0);
-  const bool is_inner_product_between_equal_vectors_one = result_a_b == Complex(1, 0);
-  return is_inner_product_between_orthogonal_vectors_zero && is_inner_product_between_equal_vectors_one;
+  const bool is_inner_product_between_equal_vectors_one =
+      are_matrices_equal(ComplexVectMatrix(Complex(1, 0)), *result_a_b);
+  const bool is_inner_product_between_orthogonal_vectors_zero =
+      are_matrices_equal(ComplexVectMatrix(Complex(0, 0)), *result_a_c);
+  return is_inner_product_between_equal_vectors_one &&
+         is_inner_product_between_orthogonal_vectors_zero;
+}
+
+bool it_should_compute_outer_product() {
+  // Given
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_0));
+  auto b = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_1));
+
+  // When
+  const auto result = AlgebraEngine::outer_product(std::move(a), std::move(b));
+
+  // Then
+  const ComplexMatrix expected = {{0, 1}, {0, 0}};
+
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_matrix_vector_product() {
+  // Given
+  auto mat = std::make_unique<ComplexVectMatrix>(ComplexMatrix(pauli_x));
+  auto vect = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_0));
+
+  // When
+  const auto result =
+      AlgebraEngine::matrix_vector_product(std::move(mat), std::move(vect));
+
+  // Then
+  const auto expected =
+      std::make_unique<ComplexVectMatrix>(ComplexVector(ket_1));
+  return are_matrices_equal(*expected, *result);
+}
+
+bool it_should_compute_scalar_product() {
+  // Given
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  constexpr Complex k = {1, 4};
+
+  // When
+  const auto result = AlgebraEngine::scalar_product(std::move(a), Complex(k));
+
+  // Then
+  const ComplexMatrix expected = {{k, 0}, {0, k}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_scalar_vector_product() {
+  // Given
+  auto complex_vector = std::make_unique<ComplexVectMatrix>(
+      ComplexVector(std::initializer_list<Complex>{{1, 1}, {2, 1}}));
+
+  // When
+  const auto result =
+      AlgebraEngine::scalar_product(std::move(complex_vector), Complex(2, 2));
+
+  // Then
+  const ComplexVector expected = {{0, 4}, {2, 6}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexVector(expected)),
+                            *result);
+}
+
+bool it_should_compute_sum() {
+  // Given
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+
+  // When
+  const auto result = AlgebraEngine::sum(std::move(a), std::move(b));
+
+  // Then
+  const ComplexMatrix expected = {{2, 0}, {0, 2}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_tensor_product() {
+  // Given
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(hadamard_2x2));
+  auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+
+  // When
+  const auto result = AlgebraEngine::tensor_product(std::move(a), std::move(b));
+
+  // Then
+  const ComplexMatrix expected = {
+      {1 / std::sqrt(2), 0, 1 / std::sqrt(2), 0},
+      {0, 1 / std::sqrt(2), 0, 1 / std::sqrt(2)},
+      {1 / std::sqrt(2), 0, -1 / std::sqrt(2), -0},
+      {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
+  };
+
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
 bool it_should_compute_matrix_power() {
   // Given
-  auto a = std::make_unique<ComplexMatrix>(identity_2x2);
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
   constexpr auto times = 8;
 
   // When
-  const auto result = AlgebraEngine::tensorial_product(std::move(a), times);
+#if PERFORMANCE_TESTING
+  const auto start_lazy = std::chrono::high_resolution_clock::now();
+#endif
+
+  const auto result = AlgebraEngine::tensor_product(std::move(a), times);
+
+#if PERFORMANCE_TESTING
+  const auto end_lazy = std::chrono::high_resolution_clock::now();
+  const auto duration_lazy =
+      std::chrono::duration_cast<std::chrono::microseconds>(end_lazy -
+                                                            start_lazy);
+  std::cout << "** Elapsed time " << times
+            << " lazy tensor products: " << duration_lazy.count() << " micros"
+            << std::endl;
+#endif
 
   // Then
-  const auto actual = result->get();
-  return verify_identity_matrix(actual)
-         && static_cast<int>(actual.size()) == std::pow(2, times);
+#if PERFORMANCE_TESTING
+  const auto start = std::chrono::high_resolution_clock::now();
+#endif
+  const auto actual = result->to_matrix();
+#if PERFORMANCE_TESTING
+  const auto end = std::chrono::high_resolution_clock::now();
+  const auto duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << " - Elapsed time materialisation: "
+            << format_with_dots(duration.count()) << " seconds" << std::endl;
+  std::cout << " - Final matrix: " << actual->row_size() << "x"
+            << actual->column_size() << std::endl;
+  std::cout << " - Total elements: "
+            << format_with_dots(actual->row_size() * actual->column_size())
+            << std::endl;
+#endif
+  return verify_identity_matrix(*actual) &&
+         actual->row_size() == std::pow(2, times);
 }
 
 bool it_should_verify_unitarity() {
   // Given
-  const auto a = hadamard_2x2;
+  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(hadamard_2x2));
 
   // When
-  const auto result = AlgebraEngine::is_unitary(a);
+#if PERFORMANCE_TESTING
+  const auto start = std::chrono::high_resolution_clock::now();
+#endif
+
+  const auto result = AlgebraEngine::is_unitary(*a);
+
+#if PERFORMANCE_TESTING
+  const auto end = std::chrono::high_resolution_clock::now();
+  const auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  std::cout << "** Elapsed time unitarity check: "
+            << format_with_dots(duration.count()) << " microseconds"
+            << std::endl;
+#endif
 
   // Then
   return result;
@@ -92,21 +249,40 @@ bool it_should_verify_unitarity() {
 int main() {
   int failed = 0;
 
+#if !PERFORMANCE_TESTING
   if (!it_should_compute_conjugate_transpose()) {
     failed += 1;
   }
-  if (!it_should_multiply_vector_by_scalar()) {
+  if (!it_should_compute_inner_product()) {
     failed += 1;
   }
-  if (!it_should_compute_inner_product_between_two_vectors()) {
+  if (!it_should_compute_tensor_product()) {
     failed += 1;
   }
+  if (!it_should_compute_scalar_product()) {
+    failed += 1;
+  }
+  if (!it_should_compute_scalar_vector_product()) {
+    failed += 1;
+  }
+  if (!it_should_compute_sum()) {
+    failed += 1;
+  }
+  if (!it_should_compute_outer_product()) {
+    failed += 1;
+  }
+  if (!it_should_compute_matrix_vector_product()) {
+    failed += 1;
+  }
+#endif
   if (!it_should_compute_matrix_power()) {
     failed += 1;
   }
   if (!it_should_verify_unitarity()) {
     failed += 1;
   }
+
+  std::cout << "Failed: " << failed << std::endl;
 
   return failed == 0 ? 0 : 1;
 }

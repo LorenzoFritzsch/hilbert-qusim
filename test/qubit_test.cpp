@@ -1,4 +1,8 @@
+#include "complex_vectorised_matrix.h"
+#include "hilbert_namespace.h"
+#include "hilbert_namespace_test.h"
 #include "qubit.h"
+#include <memory>
 
 bool it_should_create_qubit() {
   // Given
@@ -10,7 +14,8 @@ bool it_should_create_qubit() {
 
   // Then
   const auto expected = ComplexVector({alpha, beta});
-  return expected == *qubit.to_vector();
+  return are_matrices_equal(ComplexVectMatrix(ComplexVector(expected)),
+                            *qubit.to_vector());
 }
 
 bool it_should_not_create_qubit_with_invalid_alpha_beta() {
@@ -22,7 +27,7 @@ bool it_should_not_create_qubit_with_invalid_alpha_beta() {
   try {
     const auto qubit = Qubit(alpha, beta);
     return false;
-  } catch (const std::invalid_argument& e) {
+  } catch (const std::invalid_argument &e) {
     return true;
   }
 }
