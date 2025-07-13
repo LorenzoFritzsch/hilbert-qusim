@@ -41,7 +41,7 @@ public:
                  std::unique_ptr<OpMember> mat_right);
 
   static std::unique_ptr<LazyOperation>
-  tensor_product(std::unique_ptr<OpMember> mat, const int times);
+  tensor_product(std::unique_ptr<OpMember> mat, int times);
 
   static bool is_unitary(const OpMember &mat);
 };

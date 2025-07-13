@@ -17,8 +17,9 @@ public:
     }
   }
 
-  ComplexVectMatrix(const ComplexVector &m, int row_size, int column_size)
-      : row_size_(row_size), column_size_(column_size), vectorised_matrix_(m) {}
+  ComplexVectMatrix(ComplexVector m, const int row_size, const int column_size)
+      : row_size_(row_size), column_size_(column_size),
+        vectorised_matrix_(std::move(m)) {}
 
   explicit ComplexVectMatrix(const ComplexVector &v)
       : row_size_(1), column_size_(static_cast<int>(v.size())),

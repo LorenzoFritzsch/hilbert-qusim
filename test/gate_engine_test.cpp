@@ -22,8 +22,7 @@ bool it_should_apply_controlled_gate() {
   auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
 
   // When
-  auto result = GateEngine::controlled_u(std::move(control), std::move(target),
-                                         std::move(gate));
+  auto result = GateEngine::controlled_u(control, target, std::move(gate));
 
   // Then
   const auto expected = ket_1;

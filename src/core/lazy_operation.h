@@ -4,7 +4,6 @@
 #include "complex_vectorised_matrix.h"
 #include "operation.h"
 #include "operation_member.h"
-#include <cstddef>
 #include <memory>
 
 class LazyOperation final : public OpMember {
@@ -18,7 +17,7 @@ public:
             std::make_unique<Operation>(std::move(left), std::move(right), op,
                                         final_row_size, final_column_size)) {}
 
-  LazyOperation(std::unique_ptr<OpMember> op) {
+  explicit LazyOperation(std::unique_ptr<OpMember> op) {
     int final_row_size = op->row_size();
     int final_column_size = op->column_size();
     operation_ = std::make_unique<Operation>(
@@ -60,7 +59,7 @@ public:
 
   [[nodiscard]] std::unique_ptr<OpMember> clone() const override {
     std::unique_ptr<Operation> op(
-        static_cast<Operation *>(operation_->clone().release()));
+        dynamic_cast<Operation *>(operation_->clone().release()));
     return std::make_unique<LazyOperation>(op->get_left(), op->get_right(),
                                            op->get_op(), op->row_size(),
                                            op->column_size());
