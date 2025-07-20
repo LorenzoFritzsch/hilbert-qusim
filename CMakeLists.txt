@@ -12,6 +12,8 @@ add_library(hilbert STATIC
         src/engine/algebra_engine.h
         src/engine/gate_engine.cpp
         src/engine/gate_engine.h
+        src/engine/circuit_engine.h
+        src/engine/circuit_engine.cpp
         src/core/qubit.h
         src/core/lazy_operation.h
         src/core/lazy_operation.cpp
@@ -42,3 +44,7 @@ add_test(NAME "qubit_test" COMMAND qubit_test)
 add_executable(gate_engine_test "${TEST_DIR}/gate_engine_test.cpp")
 target_link_libraries(gate_engine_test hilbert)
 add_test(NAME "gate_engine_test" COMMAND gate_engine_test)
+
+add_executable(circuit_engine_test "${TEST_DIR}/circuit_engine_test.cpp")
+target_link_libraries(circuit_engine_test hilbert)
+add_test(NAME "circuit_engine_test" COMMAND circuit_engine_test)

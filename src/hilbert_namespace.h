@@ -4,14 +4,15 @@
 #include <complex>
 #include <vector>
 
-using Complex = std::complex<double>;
+using Complex = std::complex<float>;
 
 using ComplexVector = std::vector<Complex>;
 
 using ComplexMatrix = std::vector<ComplexVector>;
 
+// for float: 1e-10
 inline bool approx_equal(const Complex &a, const Complex &b,
-                         const double tol = 1e-10) {
+                         const float tol = 1e-5f) {
   return std::abs(a - b) < tol;
 }
 

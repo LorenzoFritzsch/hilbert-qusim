@@ -12,10 +12,13 @@ public:
   static std::unique_ptr<LazyOperation>
   apply_gate(std::unique_ptr<OpMember> gate, std::unique_ptr<OpMember> state);
 
-  static std::unique_ptr<Qubit>
-  controlled_u(const std::unique_ptr<Qubit> &control,
-               const std::unique_ptr<Qubit> &target,
-               std::unique_ptr<OpMember> u);
+  static std::unique_ptr<Qubit> controlled_u(const Qubit &target,
+                                             const Qubit &control,
+                                             std::unique_ptr<OpMember> u);
+
+  static std::unique_ptr<Qubit> hadamard(const Qubit &qubit);
+
+  static std::unique_ptr<ComplexVectMatrix> r_k(const int k);
 };
 
 #endif // !GATE_ENGINE_H

@@ -247,42 +247,71 @@ bool it_should_verify_unitarity() {
 }
 
 int main() {
+  int total = 0;
   int failed = 0;
 
 #if !PERFORMANCE_TESTING
   if (!it_should_compute_conjugate_transpose()) {
     failed += 1;
+    std::cout << "it_should_compute_conjugate_transpose failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_inner_product()) {
     failed += 1;
+    std::cout << "it_should_compute_inner_product failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_tensor_product()) {
     failed += 1;
+    std::cout << "it_should_compute_tensor_product failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_scalar_product()) {
     failed += 1;
+    std::cout << "it_should_compute_scalar_product failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_scalar_vector_product()) {
     failed += 1;
+    std::cout << "it_should_compute_scalar_vector_product failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_sum()) {
     failed += 1;
+    std::cout << "it_should_compute_sum failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_outer_product()) {
     failed += 1;
+    std::cout << "it_should_compute_outer_product failed" << std::endl;
   }
+  total++;
+
   if (!it_should_compute_matrix_vector_product()) {
     failed += 1;
+    std::cout << "it_should_compute_matrix_vector_product failed" << std::endl;
   }
+  total++;
+
 #endif
   if (!it_should_compute_matrix_power()) {
     failed += 1;
+    std::cout << "it_should_compute_matrix_power failed" << std::endl;
   }
+  total++;
+
   if (!it_should_verify_unitarity()) {
     failed += 1;
+    std::cout << "it_should_verify_unitarity failed" << std::endl;
   }
+  total++;
 
-  std::cout << "Failed: " << failed << std::endl;
-
+  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
   return failed == 0 ? 0 : 1;
 }

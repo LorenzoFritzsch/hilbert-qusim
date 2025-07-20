@@ -1,6 +1,7 @@
 
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
+#include <iostream>
 #include <memory>
 
 bool verify_identity_matrix(const ComplexVectMatrix &matrix) {
@@ -32,11 +33,15 @@ bool it_should_create_vectorised_matrix() {
 }
 
 int main() {
+  int total = 0;
   int failed = 0;
 
   if (!it_should_create_vectorised_matrix()) {
     failed++;
+    std::cout << "it_should_create_vectorised_matrix failed" << std::endl;
   }
+  total++;
 
+  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
   return failed == 0 ? 0 : 1;
 }

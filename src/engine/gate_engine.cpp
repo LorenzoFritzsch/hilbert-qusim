@@ -1,5 +1,14 @@
 #include "gate_engine.h"
 #include "algebra_engine.h"
+#include "complex_vectorised_matrix.h"
+#include "hilbert_namespace.h"
+#include "lazy_operation.h"
+#include "qubit.h"
+#include <cmath>
+#include <complex>
+#include <memory>
+#include <numbers>
+#include <stdexcept>
 
 std::unique_ptr<LazyOperation> make_controlled_u(std::unique_ptr<OpMember> u) {
   auto proj_i = std::make_unique<ComplexVectMatrix>(
@@ -11,11 +20,52 @@ std::unique_ptr<LazyOperation> make_controlled_u(std::unique_ptr<OpMember> u) {
   return AlgebraEngine::sum(std::move(proj_i), std::move(proj_u));
 }
 
+std::unique_ptr<ComplexVectMatrix>
+reduced_density_matrix(const std::unique_ptr<LazyOperation> &s) {
+  if (s->row_size() != 1 || s->column_size() != 4) {
+    throw std::invalid_argument(
+        "Cannot compute reduced density matrix for state vector of size != 4");
+  }
+  auto alpha = s->get(0, 0);
+  auto beta = s->get(0, 1);
+  auto gamma = s->get(0, 2);
+  auto delta = s->get(0, 3);
+  return std::make_unique<ComplexVectMatrix>(
+      ComplexMatrix({{alpha * std::conj(alpha) + gamma * std::conj(gamma),
+                      alpha * std::conj(beta) + gamma * std::conj(delta)},
+                     {beta * std::conj(alpha) + delta * std::conj(gamma),
+                      beta * std::conj(beta) + delta * std::conj(delta)}}));
+}
+
 std::unique_ptr<Qubit>
 trace_out_target(const std::unique_ptr<LazyOperation> &s) {
-  return std::make_unique<Qubit>(
-      s->get(0, 0) * s->get(0, 0) + s->get(0, 2) * s->get(0, 2),
-      s->get(0, 1) * s->get(0, 1) + s->get(0, 3) * s->get(0, 3));
+  auto reduced = reduced_density_matrix(s);
+  Complex zero(0), one(1);
+  Complex alpha, beta;
+  alpha = reduced->get(0, 0) - one;
+  beta = reduced->get(0, 1);
+
+  if (approx_equal(alpha, zero) && approx_equal(beta, zero)) {
+    alpha = reduced->get(1, 0);
+    beta = reduced->get(1, 1) - one;
+  }
+
+  if (approx_equal(alpha, zero)) {
+    alpha = one;
+    beta = zero;
+  } else if (approx_equal(beta, zero)) {
+    alpha = zero;
+    beta = one;
+  } else {
+    beta = (-alpha) / beta;
+    alpha = one;
+    auto norm =
+        static_cast<Complex>(std::sqrt(std::norm(alpha) + std::norm(beta)));
+    alpha = alpha / norm;
+    beta = beta / norm;
+  }
+
+  return std::make_unique<Qubit>(alpha, beta);
 }
 
 std::unique_ptr<LazyOperation>
@@ -25,16 +75,28 @@ GateEngine::apply_gate(std::unique_ptr<OpMember> gate,
                                               std::move(state));
 }
 
-std::unique_ptr<Qubit>
-GateEngine::controlled_u(const std::unique_ptr<Qubit> &control,
-                         const std::unique_ptr<Qubit> &target,
-                         std::unique_ptr<OpMember> u) {
+std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
+                                                const Qubit &control,
+                                                std::unique_ptr<OpMember> u) {
   if (!AlgebraEngine::is_unitary(*u)) {
     throw std::runtime_error("U is not unitary");
   }
-  auto state = AlgebraEngine::tensor_product(std::move(control->to_vector()),
-                                             std::move(target->to_vector()));
+  auto state = AlgebraEngine::tensor_product(std::move(control.to_vector()),
+                                             std::move(target.to_vector()));
   auto transformed_state =
       apply_gate(make_controlled_u(std::move(u)), std::move(state));
   return trace_out_target(transformed_state);
+}
+
+std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {
+  return std::make_unique<Qubit>(apply_gate(
+      std::make_unique<ComplexVectMatrix>(hadamard_2x2), qubit.to_vector()));
+}
+
+std::unique_ptr<ComplexVectMatrix> GateEngine::r_k(const int k) {
+  auto rotation = std::numbers::pi * 2 / std::pow(2, k);
+  auto rotation_real = std::cos(rotation);
+  auto rotation_imag = std::sin(rotation);
+  return std::make_unique<ComplexVectMatrix>(
+      ComplexMatrix({{1, 0}, {0, Complex(rotation_real, rotation_imag)}}));
 }
