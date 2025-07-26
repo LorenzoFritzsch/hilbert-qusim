@@ -93,8 +93,11 @@ std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {
       std::make_unique<ComplexVectMatrix>(hadamard_2x2), qubit.to_vector()));
 }
 
-std::unique_ptr<ComplexVectMatrix> GateEngine::r_k(const int k) {
-  auto rotation = std::numbers::pi * 2 / std::pow(2, k);
+std::unique_ptr<ComplexVectMatrix> GateEngine::r_k(const int k, bool inverse) {
+  auto rotation = 2 * std::numbers::pi / std::pow(2, k);
+  if (inverse) {
+    rotation = -rotation;
+  }
   auto rotation_real = std::cos(rotation);
   auto rotation_imag = std::sin(rotation);
   return std::make_unique<ComplexVectMatrix>(

@@ -18,7 +18,8 @@ public:
 
   static std::unique_ptr<Qubit> hadamard(const Qubit &qubit);
 
-  static std::unique_ptr<ComplexVectMatrix> r_k(const int k);
+  static std::unique_ptr<ComplexVectMatrix> r_k(const int k,
+                                                bool inverse = false);
 };
 
 #endif // !GATE_ENGINE_H

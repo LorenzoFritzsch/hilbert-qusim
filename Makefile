@@ -21,7 +21,7 @@ clean:
 	@rm -rf $(BUILD_DIR) $(DEBUG_DIR)
 
 test: clean build
-	cd $(BUILD_DIR) && ctest --output-on-failure -V
+	cd $(BUILD_DIR) && ctest -V
 
 test-debug: build-debug
-	cd $(DEBUG_DIR) && ctest --output-on-failure -V -C Debug
+	cd $(DEBUG_DIR) && ctest -V -C Debug

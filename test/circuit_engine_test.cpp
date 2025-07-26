@@ -58,6 +58,21 @@ bool it_should_compute_qft() {
   return case_1_ok && case_2_ok;
 }
 
+bool it_should_compute_qft_and_inverse() {
+  // Given
+  auto ket_0_q = Qubit(1, 0);
+  auto ket_1_q = Qubit(0, 1);
+  auto state =
+      std::vector<Qubit>({ket_0_q, ket_1_q, ket_0_q, ket_0_q, ket_1_q});
+
+  // When
+  auto state_qft = CircuitEngine::qft(state);
+  auto state_iqft = CircuitEngine::inverse_qft(state_qft);
+
+  // Then
+  return are_states_equal(state, state_iqft);
+}
+
 int main() {
   int total = 0;
   int failed = 0;
@@ -65,6 +80,12 @@ int main() {
   if (!it_should_compute_qft()) {
     failed++;
     std::cout << "it_should_compute_qft failed" << std::endl;
+  }
+  total++;
+
+  if (!it_should_compute_qft_and_inverse()) {
+    failed++;
+    std::cout << "it_should_compute_qft_and_inverse failed" << std::endl;
   }
   total++;
 
