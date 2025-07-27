@@ -52,7 +52,7 @@ bool it_should_compute_conjugate_transpose() {
   auto mat = std::make_unique<ComplexVectMatrix>(ComplexMatrix(complex_mat));
 
   // When
-  auto result = AlgebraEngine::conjugate_transpose(std::move(mat));
+  auto result = AlgebraEngine::conjugate_transpose(*mat);
 
   // Then
   ComplexMatrix expected = {{{1, -1}, {2, -1}}, {{1, -2}, {2, -2}}};
@@ -72,10 +72,10 @@ bool it_should_compute_inner_product() {
       std::make_unique<ComplexVectMatrix>(ComplexVector(1, 0));
 
   // When
-  const auto result_a_b = AlgebraEngine::inner_product(
-      std::move(complex_vector_a), std::move(complex_vector_b));
-  const auto result_a_c = AlgebraEngine::inner_product(
-      std::move(complex_vector_c), std::move(complex_vector_d));
+  const auto result_a_b =
+      AlgebraEngine::inner_product(*complex_vector_a, *complex_vector_b);
+  const auto result_a_c =
+      AlgebraEngine::inner_product(*complex_vector_c, *complex_vector_d);
 
   // Then
   const bool is_inner_product_between_equal_vectors_one =
@@ -92,7 +92,7 @@ bool it_should_compute_outer_product() {
   auto b = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_1));
 
   // When
-  const auto result = AlgebraEngine::outer_product(std::move(a), std::move(b));
+  const auto result = AlgebraEngine::outer_product(*a, *b);
 
   // Then
   const ComplexMatrix expected = {{0, 1}, {0, 0}};
@@ -107,8 +107,7 @@ bool it_should_compute_matrix_vector_product() {
   auto vect = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_0));
 
   // When
-  const auto result =
-      AlgebraEngine::matrix_vector_product(std::move(mat), std::move(vect));
+  const auto result = AlgebraEngine::matrix_vector_product(*mat, *vect);
 
   // Then
   const auto expected =
@@ -122,7 +121,7 @@ bool it_should_compute_scalar_product() {
   constexpr Complex k = {1, 4};
 
   // When
-  const auto result = AlgebraEngine::scalar_product(std::move(a), Complex(k));
+  const auto result = AlgebraEngine::scalar_product(*a, Complex(k));
 
   // Then
   const ComplexMatrix expected = {{k, 0}, {0, k}};
@@ -137,7 +136,7 @@ bool it_should_compute_scalar_vector_product() {
 
   // When
   const auto result =
-      AlgebraEngine::scalar_product(std::move(complex_vector), Complex(2, 2));
+      AlgebraEngine::scalar_product(*complex_vector, Complex(2, 2));
 
   // Then
   const ComplexVector expected = {{0, 4}, {2, 6}};
@@ -151,7 +150,7 @@ bool it_should_compute_sum() {
   auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
 
   // When
-  const auto result = AlgebraEngine::sum(std::move(a), std::move(b));
+  const auto result = AlgebraEngine::sum(*a, *b);
 
   // Then
   const ComplexMatrix expected = {{2, 0}, {0, 2}};
@@ -165,7 +164,7 @@ bool it_should_compute_tensor_product() {
   auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
 
   // When
-  const auto result = AlgebraEngine::tensor_product(std::move(a), std::move(b));
+  const auto result = AlgebraEngine::tensor_product(*a, *b);
 
   // Then
   const ComplexMatrix expected = {
@@ -189,7 +188,7 @@ bool it_should_compute_matrix_power() {
   const auto start_lazy = std::chrono::high_resolution_clock::now();
 #endif
 
-  const auto result = AlgebraEngine::tensor_product(std::move(a), times);
+  const auto result = AlgebraEngine::tensor_product(*a, times);
 
 #if PERFORMANCE_TESTING
   const auto end_lazy = std::chrono::high_resolution_clock::now();
@@ -211,7 +210,7 @@ bool it_should_compute_matrix_power() {
   const auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   std::cout << " - Elapsed time materialisation: "
-            << format_with_dots(duration.count()) << " seconds" << std::endl;
+            << format_with_dots(duration.count()) << " millis" << std::endl;
   std::cout << " - Final matrix: " << actual->row_size() << "x"
             << actual->column_size() << std::endl;
   std::cout << " - Total elements: "
@@ -251,67 +250,66 @@ int main() {
   int failed = 0;
 
 #if !PERFORMANCE_TESTING
-  if (!it_should_compute_conjugate_transpose()) {
+  if (!run_test("it_should_compute_conjugate_transpose",
+                it_should_compute_conjugate_transpose)) {
     failed += 1;
-    std::cout << "it_should_compute_conjugate_transpose failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_inner_product()) {
+  if (!run_test("it_should_compute_inner_product",
+                it_should_compute_inner_product)) {
     failed += 1;
-    std::cout << "it_should_compute_inner_product failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_tensor_product()) {
+  if (!run_test("it_should_compute_tensor_product",
+                it_should_compute_tensor_product)) {
     failed += 1;
-    std::cout << "it_should_compute_tensor_product failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_scalar_product()) {
+  if (!run_test("it_should_compute_scalar_product",
+                it_should_compute_scalar_product)) {
     failed += 1;
-    std::cout << "it_should_compute_scalar_product failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_scalar_vector_product()) {
+  if (!run_test("it_should_compute_scalar_vector_product",
+                it_should_compute_scalar_vector_product)) {
     failed += 1;
-    std::cout << "it_should_compute_scalar_vector_product failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_sum()) {
+  if (!run_test("it_should_compute_sum", it_should_compute_sum)) {
     failed += 1;
-    std::cout << "it_should_compute_sum failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_outer_product()) {
+  if (!run_test("it_should_compute_outer_product",
+                it_should_compute_outer_product)) {
     failed += 1;
-    std::cout << "it_should_compute_outer_product failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_matrix_vector_product()) {
+  if (!run_test("it_should_compute_matrix_vector_product",
+                it_should_compute_matrix_vector_product)) {
     failed += 1;
-    std::cout << "it_should_compute_matrix_vector_product failed" << std::endl;
   }
   total++;
 
 #endif
-  if (!it_should_compute_matrix_power()) {
+  if (!run_test("it_should_verify_unitarity", it_should_verify_unitarity)) {
     failed += 1;
-    std::cout << "it_should_compute_matrix_power failed" << std::endl;
   }
   total++;
 
-  if (!it_should_verify_unitarity()) {
+  if (!run_test("it_should_compute_matrix_power",
+                it_should_compute_matrix_power)) {
     failed += 1;
-    std::cout << "it_should_verify_unitarity failed" << std::endl;
   }
   total++;
 
-  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
+  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
+            << std::endl;
   return failed == 0 ? 0 : 1;
 }

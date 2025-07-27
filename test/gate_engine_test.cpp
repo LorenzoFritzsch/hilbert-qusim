@@ -11,7 +11,7 @@ bool it_should_apply_gate() {
   auto state = std::make_unique<ComplexVectMatrix>(ket_0);
 
   // When
-  const auto result = GateEngine::apply_gate(std::move(gate), std::move(state));
+  const auto result = GateEngine::apply_gate(*gate, *state);
 
   // Then
   return are_matrices_equal(ComplexVectMatrix(ket_1), *result);
@@ -24,7 +24,7 @@ bool it_should_apply_controlled_gate() {
   auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
 
   // When
-  auto result = GateEngine::controlled_u(*target, *control, std::move(gate));
+  auto result = GateEngine::controlled_u(*target, *control, *gate);
 
   // Then
   const auto expected = ket_1;
@@ -48,24 +48,23 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!it_should_apply_gate()) {
+  if (!run_test("it_should_apply_gate", it_should_apply_gate)) {
     failed++;
-    std::cout << "it_should_apply_gate failed" << std::endl;
   }
   total++;
 
-  if (!it_should_apply_controlled_gate()) {
+  if (!run_test("it_should_apply_controlled_gate",
+                it_should_apply_controlled_gate)) {
     failed++;
-    std::cout << "it_should_apply_controlled_gate failed" << std::endl;
   }
   total++;
 
-  if (!it_should_apply_hadamard()) {
+  if (!run_test("it_should_apply_hadamard", it_should_apply_hadamard)) {
     failed++;
-    std::cout << "it_should_apply_hadamard failed" << std::endl;
   }
   total++;
 
-  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
+  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
+            << std::endl;
   return failed == 0 ? 0 : 1;
 }

@@ -1,70 +1,181 @@
 #ifndef OPERATION_H
 #define OPERATION_H
 
-#include "operation_member.h"
+#include "complex_vector_split.h"
+#include "complex_vectorised_matrix.h"
 #include <functional>
-#include <memory>
+#include <variant>
 
-class Operation final : public OpMember {
+enum OperationType {
+  OperationOperation,
+  OperationMatrix,
+  MatrixOperation,
+  MatrixMatrix
+};
+
+class Operation final {
 public:
-  Operation(
-      std::unique_ptr<OpMember> left, std::unique_ptr<OpMember> right,
-      std::function<Complex(const std::unique_ptr<OpMember> &a,
-                            const std::unique_ptr<OpMember> &b, int m, int n)>
-          op,
-      const int final_row_size, const int final_column_size)
-      : left_(std::move(left)), right_(std::move(right)),
-        row_size_(final_row_size), column_size_(final_column_size),
-        op_(std::move(op)) {}
+  using op_op = std::function<Complex(
+      const Operation &left, const Operation &right, const int m, const int n)>;
+  using op_mat = std::function<Complex(const Operation &left,
+                                       const ComplexVectMatrix &right,
+                                       const int m, const int n)>;
+  using mat_op =
+      std::function<Complex(const ComplexVectMatrix &left,
+                            const Operation &right, const int m, const int n)>;
+  using mat_mat = std::function<Complex(const ComplexVectMatrix &left,
+                                        const ComplexVectMatrix &right,
+                                        const int m, const int n)>;
 
+  using op_op_row = std::function<ComplexVectSplit(
+      const Operation &left, const Operation &right, const int row)>;
+  using op_mat_row = std::function<ComplexVectSplit(
+      const Operation &left, const ComplexVectMatrix &right, const int row)>;
+  using mat_op_row = std::function<ComplexVectSplit(
+      const ComplexVectMatrix &left, const Operation &right, const int row)>;
+  using mat_mat_row = std::function<ComplexVectSplit(
+      const ComplexVectMatrix &left, const ComplexVectMatrix &right,
+      const int row)>;
+
+  // TODO: Review
   Operation(Operation &&) = default;
-  Operation &operator=(Operation &&) = default;
-
-  Operation(const Operation &) = delete;
+  Operation &operator=(Operation &&) = delete;
+  Operation(const Operation &) = default;
   Operation &operator=(const Operation &) = delete;
 
-  [[nodiscard]] Complex get(const int m, const int n) const override {
-    return op_(left_, right_, m, n);
+  Operation(int left_index, int right_index,
+            const std::vector<ComplexVectMatrix> &mat_vect,
+            const std::vector<Operation> &op_vect, op_op op, op_op_row op_row,
+            const int final_row_size, const int final_column_size)
+      : left_index_(left_index), right_index_(right_index),
+        op_type_(OperationOperation), mat_vect_(mat_vect), op_vect_(op_vect),
+        op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
+        row_size_(final_row_size), column_size_(final_column_size) {}
+
+  Operation(int left_index, int right_index,
+            const std::vector<ComplexVectMatrix> &mat_vect,
+            const std::vector<Operation> &op_vect, op_mat op, op_mat_row op_row,
+            const int final_row_size, const int final_column_size)
+      : left_index_(left_index), right_index_(right_index),
+        op_type_(OperationMatrix), mat_vect_(mat_vect), op_vect_(op_vect),
+        op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
+        row_size_(final_row_size), column_size_(final_column_size) {}
+
+  Operation(int left_index, int right_index,
+            const std::vector<ComplexVectMatrix> &mat_vect,
+            const std::vector<Operation> &op_vect, mat_op op, mat_op_row op_row,
+            const int final_row_size, const int final_column_size)
+      : left_index_(left_index), right_index_(right_index),
+        op_type_(MatrixOperation), mat_vect_(mat_vect), op_vect_(op_vect),
+        op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
+        row_size_(final_row_size), column_size_(final_column_size) {}
+
+  Operation(int left_index, int right_index,
+            const std::vector<ComplexVectMatrix> &mat_vect,
+            const std::vector<Operation> &op_vect, mat_mat op,
+            mat_mat_row op_row, const int final_row_size,
+            const int final_column_size)
+      : left_index_(left_index), right_index_(right_index),
+        op_type_(MatrixMatrix), mat_vect_(mat_vect), op_vect_(op_vect),
+        op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
+        row_size_(final_row_size), column_size_(final_column_size) {}
+
+  [[nodiscard]] Complex get(const int m, const int n) const {
+    switch (op_type_) {
+    case OperationOperation: {
+      auto op = std::get<op_op>(op_functor_);
+      return op(op_vect_[left_index_], op_vect_[right_index_], m, n);
+    }
+    case OperationMatrix: {
+      auto op = std::get<op_mat>(op_functor_);
+      return op(op_vect_[left_index_], mat_vect_[right_index_], m, n);
+    }
+    case MatrixOperation: {
+      auto op = std::get<mat_op>(op_functor_);
+      return op(mat_vect_[left_index_], op_vect_[right_index_], m, n);
+    }
+    case MatrixMatrix: {
+      auto op = std::get<mat_mat>(op_functor_);
+      return op(mat_vect_[left_index_], mat_vect_[right_index_], m, n);
+    }
+    }
   }
 
-  [[nodiscard]] int row_size() const override { return row_size_; }
-
-  [[nodiscard]] int column_size() const override { return column_size_; }
-
-  [[nodiscard]] std::unique_ptr<OpMember> clone() const override {
-    return std::make_unique<Operation>(left_->clone(), right_->clone(), op_,
-                                       row_size_, column_size_);
+  [[nodiscard]] ComplexVectSplit get(const int row) const {
+    switch (op_type_) {
+    case OperationOperation: {
+      auto op = std::get<op_op_row>(op_row_functor_);
+      return op(op_vect_[left_index_], op_vect_[right_index_], row);
+    }
+    case OperationMatrix: {
+      auto op = std::get<op_mat_row>(op_row_functor_);
+      return op(op_vect_[left_index_], mat_vect_[right_index_], row);
+    }
+    case MatrixOperation: {
+      auto op = std::get<mat_op_row>(op_row_functor_);
+      return op(mat_vect_[left_index_], op_vect_[right_index_], row);
+    }
+    case MatrixMatrix: {
+      auto op = std::get<mat_mat_row>(op_row_functor_);
+      return op(mat_vect_[left_index_], mat_vect_[right_index_], row);
+    }
+    }
   }
 
-  /*
-   * Transfers ownership of `left_`.
-   */
-  [[nodiscard]] std::unique_ptr<OpMember> get_left() {
-    return std::move(left_);
+  [[nodiscard]] int row_size() const { return row_size_; }
+
+  [[nodiscard]] int column_size() const { return column_size_; }
+
+  [[nodiscard]] OperationType op_type() const { return op_type_; }
+
+  [[nodiscard]] std::variant<Operation, ComplexVectMatrix> left() const {
+    switch (op_type_) {
+    case OperationOperation:
+    case OperationMatrix:
+      return op_vect_[left_index_];
+    case MatrixOperation:
+    case MatrixMatrix:
+      return mat_vect_[left_index_];
+    }
   }
 
-  /*
-   * Transfers ownership of `right_`.
-   */
-  [[nodiscard]] std::unique_ptr<OpMember> get_right() {
-    return std::move(right_);
+  [[nodiscard]] int left_index() const { return left_index_; }
+
+  [[nodiscard]] std::variant<Operation, ComplexVectMatrix> right() const {
+    switch (op_type_) {
+    case OperationOperation:
+    case MatrixOperation:
+      return op_vect_[right_index_];
+    case OperationMatrix:
+    case MatrixMatrix:
+      return mat_vect_[right_index_];
+    }
   }
 
-  [[nodiscard]] std::function<Complex(const std::unique_ptr<OpMember> &a,
-                                      const std::unique_ptr<OpMember> &b, int m,
-                                      int n)>
-  get_op() {
-    return op_;
+  [[nodiscard]] int right_index() const { return right_index_; }
+
+  [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_functor() {
+    return op_functor_;
+  }
+
+  [[nodiscard]] std::variant<op_op_row, op_mat_row, mat_op_row, mat_mat_row>
+  op_row_functor() {
+    return op_row_functor_;
   }
 
 private:
-  std::unique_ptr<OpMember> left_;
-  std::unique_ptr<OpMember> right_;
+  const int left_index_;
+  const int right_index_;
+  const OperationType op_type_;
+
+  const std::vector<ComplexVectMatrix> &mat_vect_;
+  const std::vector<Operation> &op_vect_;
+
+  std::variant<op_op, op_mat, mat_op, mat_mat> op_functor_;
+  std::variant<op_op_row, op_mat_row, mat_op_row, mat_mat_row> op_row_functor_;
+
   int row_size_;
   int column_size_;
-  std::function<Complex(const std::unique_ptr<OpMember> &a,
-                        const std::unique_ptr<OpMember> &b, int m, int n)>
-      op_;
 };
 
 #endif // !OPERATION_H

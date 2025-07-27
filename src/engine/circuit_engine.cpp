@@ -10,7 +10,7 @@ std::vector<Qubit> CircuitEngine::qft(const std::vector<Qubit> j) {
     auto j_k = GateEngine::hadamard(j[i]);
     for (int k_next = i + 1; k_next < j.size(); k_next++) {
       j_k = GateEngine::controlled_u(*j_k, j[k_next],
-                                     GateEngine::r_k(k_next + 1));
+                                     *GateEngine::r_k(k_next + 1));
     }
     result[last_index - i] = *j_k;
   }
@@ -29,7 +29,7 @@ std::vector<Qubit> CircuitEngine::inverse_qft(const std::vector<Qubit> k) {
     auto k_i = swapped[i];
     for (int j = last_index; j > i; j--) {
       k_i = *GateEngine::controlled_u(k_i, result[j],
-                                      GateEngine::r_k(j + 1, true));
+                                      *GateEngine::r_k(j + 1, true));
     }
     result[i] = *GateEngine::hadamard(k_i);
   }

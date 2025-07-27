@@ -4,7 +4,9 @@
 #include <complex>
 #include <vector>
 
-using Complex = std::complex<float>;
+using __complex_precision = float;
+
+using Complex = std::complex<__complex_precision>;
 
 using ComplexVector = std::vector<Complex>;
 

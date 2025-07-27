@@ -77,18 +77,18 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!it_should_compute_qft()) {
+  if (!run_test("it_should_compute_qft", it_should_compute_qft)) {
     failed++;
-    std::cout << "it_should_compute_qft failed" << std::endl;
   }
   total++;
 
-  if (!it_should_compute_qft_and_inverse()) {
+  if (!run_test("it_should_compute_qft_and_inverse",
+                it_should_compute_qft_and_inverse)) {
     failed++;
-    std::cout << "it_should_compute_qft_and_inverse failed" << std::endl;
   }
   total++;
 
-  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
+  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
+            << std::endl;
   return failed == 0 ? 0 : 1;
 }

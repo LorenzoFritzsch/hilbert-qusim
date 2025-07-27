@@ -1,221 +1,595 @@
 #include "algebra_engine.h"
 
+#include "complex_vector_split.h"
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
-#include "operation_member.h"
-#include <algorithm>
+#include "operation.h"
+#include <complex>
 #include <memory>
-#include <utility>
+
+#include <Accelerate/Accelerate.h>
+
+/*
+ * SIMD element-wise complex vector multiplication
+ */
+ComplexVectSplit cvmul(const ComplexVectSplit &left,
+                       const ComplexVectSplit &right) {
+
+  // Considering the formula (a + bi)(c + di) = (ac - bd) + i(ad + bc):
+  std::vector<__complex_precision> ac_vect(left.size()), bd_vect(left.size()),
+      ad_vect(left.size()), bc_vect(left.size());
+
+  std::vector<__complex_precision> result_real(left.size());
+  std::vector<__complex_precision> result_imag(left.size());
+
+  auto left_real = left.real();
+  auto left_imag = left.imag();
+  auto right_real = right.real();
+  auto right_imag = right.imag();
+
+  vDSP_vmul(left_real.data(), 1, right_real.data(), 1, ac_vect.data(), 1,
+            ac_vect.size());
+  vDSP_vmul(left_imag.data(), 1, right_imag.data(), 1, bd_vect.data(), 1,
+            bd_vect.size());
+  vDSP_vmul(left_real.data(), 1, right_imag.data(), 1, ad_vect.data(), 1,
+            ad_vect.size());
+  vDSP_vmul(left_imag.data(), 1, right_real.data(), 1, bc_vect.data(), 1,
+            bc_vect.size());
+
+  vDSP_vsub(bd_vect.data(), 1, ac_vect.data(), 1, result_real.data(), 1,
+            result_real.size());
+  vDSP_vadd(ad_vect.data(), 1, bc_vect.data(), 1, result_imag.data(), 1,
+            result_imag.size());
+
+  return ComplexVectSplit(result_real, result_imag);
+}
 
 /*
  * Conjugate transpose
  */
-Complex conjugate_transpose_lazy(const std::unique_ptr<OpMember> &left,
-                                 const std::unique_ptr<OpMember> &right,
-                                 const int m, const int n) {
-  return std::conj(left->get(n, m));
+Complex conjugate_transpose_lazy(const ComplexVectMatrix &left,
+                                 const ComplexVectMatrix &right, const int m,
+                                 const int n) {
+  return std::conj(left.get(n, m));
+}
+
+ComplexVectSplit conjugate_transpose_row(const ComplexVectMatrix &left,
+                                         const ComplexVectMatrix &right,
+                                         const int row) {
+  return left.get_column(row).conj();
 }
 
 /*
  * Inner product
  */
-Complex inner_product_lazy(const std::unique_ptr<OpMember> &left,
-                           const std::unique_ptr<OpMember> &right, const int m,
-                           const int n) {
-  Complex result = 0;
-  const auto max = std::min(left->column_size(), right->column_size());
-  for (int i = 0; i < max; i++) {
-    result += left->get(0, i) * right->get(0, i);
-  }
+Complex inner_product_mat_mat(const ComplexVectMatrix &left,
+                              const ComplexVectMatrix &right, const int m,
+                              const int n) {
+
+  auto left_split = left.split().conj();
+  auto right_split = right.split();
+
+  auto elements = cvmul(left_split, right_split);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
+}
+
+ComplexVectSplit inner_product_mat_mat_row(const ComplexVectMatrix &left,
+                                           const ComplexVectMatrix &right,
+                                           const int row) {
+  ComplexVectSplit result;
+  result.add(inner_product_mat_mat(left, right, 0, 0));
   return result;
 }
 
 /*
  * Row-column multiplication
  */
-Complex matrix_multiplication_lazy(const std::unique_ptr<OpMember> &left,
-                                   const std::unique_ptr<OpMember> &right,
-                                   const int m, const int n) {
-  Complex result(0, 0);
-  for (int i = 0; i < left->column_size(); i++) {
-    result += left->get(n, i) * right->get(m, i);
+Complex matrix_multiplication_op_op(const Operation &left,
+                                    const Operation &right, const int row,
+                                    const int col) {
+  auto vect_left = left.get(row);
+  ComplexVectSplit vect_right;
+  for (int m = 0; m < right.row_size(); m++) {
+    vect_right.add(right.get(m, col));
+  }
+
+  auto elements = cvmul(vect_left, vect_right);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
+}
+
+ComplexVectSplit matrix_multiplication_op_op_row(const Operation &left,
+                                                 const Operation &right,
+                                                 const int row) {
+  ComplexVectSplit result;
+  for (int n = 0; n < right.row_size(); n++) {
+    result.add(matrix_multiplication_op_op(left, right, row, n));
   }
   return result;
 }
 
-int matrix_multiplication_final_row_size(const OpMember &left,
-                                         const OpMember &right) {
-  return left.row_size();
+Complex matrix_multiplication_mat_mat(const ComplexVectMatrix &left,
+                                      const ComplexVectMatrix &right,
+                                      const int row, const int col) {
+  auto vect_left = left.get_row(row);
+  ComplexVectSplit vect_right;
+  for (int m = 0; m < right.row_size(); m++) {
+    vect_right.add(right.get(m, col));
+  }
+
+  auto elements = cvmul(vect_left, vect_right);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
 }
 
-int matrix_multiplication_final_column_size(const OpMember &left,
-                                            const OpMember &right) {
-  return right.column_size();
+ComplexVectSplit
+matrix_multiplication_mat_mat_row(const ComplexVectMatrix &left,
+                                  const ComplexVectMatrix &right,
+                                  const int row) {
+  auto row_left = left.get_row(row);
+  ComplexVectSplit result;
+  for (int n = 0; n < right.column_size(); n++) {
+    auto column_right = right.get_column(n);
+    auto elements = cvmul(row_left, column_right);
+
+    __complex_precision result_real = 0;
+    __complex_precision result_imag = 0;
+    vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+    vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+    result.add(Complex(result_real, result_imag));
+  }
+  return result;
+}
+
+Complex matrix_multiplication_op_mat(const Operation &left,
+                                     const ComplexVectMatrix &right,
+                                     const int row, const int col) {
+  auto vect_left = left.get(row);
+  auto vect_right = right.get_column(col);
+
+  auto elements = cvmul(vect_left, vect_right);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
+}
+
+ComplexVectSplit matrix_multiplication_op_mat_row(
+    const Operation &left, const ComplexVectMatrix &right, const int row) {
+  auto row_left = left.get(row);
+  ComplexVectSplit result;
+  for (int n = 0; n < right.column_size(); n++) {
+    auto column_right = right.get_column(n);
+    auto elements = cvmul(row_left, column_right);
+
+    __complex_precision result_real = 0;
+    __complex_precision result_imag = 0;
+    vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+    vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+    result.add(Complex(result_real, result_imag));
+  }
+  return result;
+}
+
+Complex matrix_vector_mul_mat_mat(const ComplexVectMatrix &left,
+                                  const ComplexVectMatrix &right, const int row,
+                                  const int col) {
+  auto vect_left = left.get_row(col);
+  auto vect_right = right.split();
+  auto elements = cvmul(vect_left, vect_right);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
+}
+
+ComplexVectSplit matrix_vector_mul_mat_mat_row(const ComplexVectMatrix &left,
+                                               const ComplexVectMatrix &right,
+                                               const int row) {
+  ComplexVectSplit result;
+  for (int col = 0; col < right.column_size(); col++) {
+    result.add(matrix_vector_mul_mat_mat(left, right, row, col));
+  }
+  return result;
+}
+
+Complex matrix_vector_mul_op_op(const Operation &left, const Operation &right,
+                                const int row, const int col) {
+  auto vect_left = left.get(col);
+  ComplexVectSplit vect_right;
+  for (int m = 0; m < right.column_size(); m++) {
+    vect_right.add(right.get(0, m));
+  }
+
+  auto elements = cvmul(vect_left, vect_right);
+
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
+  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
+
+  return Complex(result_real, result_imag);
+}
+
+ComplexVectSplit matrix_vector_mul_op_op_row(const Operation &left,
+                                             const Operation &right,
+                                             const int row) {
+  ComplexVectSplit result;
+  for (int col = 0; col < right.column_size(); col++) {
+    result.add(matrix_vector_mul_op_op(left, right, row, col));
+  }
+  return result;
+}
+
+int matrix_multiplication_final_row_size(int row_size_left,
+                                         int column_size_left,
+                                         int row_size_right,
+                                         int column_size_right) {
+  return row_size_left;
+}
+
+int matrix_multiplication_final_column_size(int row_size_left,
+                                            int column_size_left,
+                                            int row_size_right,
+                                            int column_size_right) {
+  return column_size_right;
 }
 
 /*
  * Outer product
  */
-Complex outer_product_lazy(const std::unique_ptr<OpMember> &left,
-                           const std::unique_ptr<OpMember> &right, const int m,
-                           const int n) {
-  return left->get(0, m) * right->get(0, n);
+Complex outer_product_mat_mat(const ComplexVectMatrix &left,
+                              const ComplexVectMatrix &right, const int m,
+                              const int n) {
+  return left.get(0, m) * std::conj(right.get(0, n));
+}
+
+ComplexVectSplit outer_product_mat_mat_row(const ComplexVectMatrix &left,
+                                           const ComplexVectMatrix &right,
+                                           const int row) {
+  auto vect_left = left.get_row(0);
+  auto vect_right = right.get_row(0).conj();
+
+  return cvmul(vect_left, vect_right);
 }
 
 /*
  * Scalar Product
  */
-Complex scalar_product_lazy(const std::unique_ptr<OpMember> &left,
-                            const std::unique_ptr<OpMember> &right, const int m,
-                            const int n) {
-  return left->get(m, n) * right->get(0, 0);
+Complex scalar_product_mat_mat(const ComplexVectMatrix &left,
+                               const ComplexVectMatrix &right, const int m,
+                               const int n) {
+  return left.get(m, n) * right.get(0, 0);
+}
+
+ComplexVectSplit scalar_product_mat_mat_row(const ComplexVectMatrix &left,
+                                            const ComplexVectMatrix &right,
+                                            const int row) {
+  auto vect_left = left.get_row(row);
+  auto vect_left_real = vect_left.real();
+  auto vect_left_imag = vect_left.imag();
+  auto k = right.get(0, 0);
+  auto k_real = static_cast<__complex_precision>(k.real());
+  auto k_imag = static_cast<__complex_precision>(k.imag());
+
+  // Considering the formula (a + bi)(c + di) = (ac - bd) + i(ad + bc):
+  std::vector<__complex_precision> vect_ac(vect_left.size()),
+      vect_bd(vect_left.size()), vect_ad(vect_left.size()),
+      vect_bc(vect_left.size());
+
+  std::vector<__complex_precision> result_real(vect_left.size()),
+      result_imag(vect_left.size());
+
+  vDSP_vsmul(vect_left_real.data(), 1, &k_real, vect_ac.data(), 1,
+             vect_ac.size());
+  vDSP_vsmul(vect_left_imag.data(), 1, &k_imag, vect_bd.data(), 1,
+             vect_bd.size());
+  vDSP_vsmul(vect_left_real.data(), 1, &k_imag, vect_ad.data(), 1,
+             vect_ad.size());
+  vDSP_vsmul(vect_left_imag.data(), 1, &k_real, vect_bc.data(), 1,
+             vect_bc.size());
+
+  vDSP_vsub(vect_bd.data(), 1, vect_ac.data(), 1, result_real.data(), 1,
+            result_real.size());
+  vDSP_vadd(vect_ad.data(), 1, vect_bc.data(), 1, result_imag.data(), 1,
+            result_imag.size());
+
+  return ComplexVectSplit(result_real, result_imag);
 }
 
 /*
  * Sum
  */
-Complex sum_lazy(const std::unique_ptr<OpMember> &left,
-                 const std::unique_ptr<OpMember> &right, const int m,
-                 const int n) {
-  return left->get(m, n) + right->get(m, n);
+Complex sum_mat_mat(const ComplexVectMatrix &left,
+                    const ComplexVectMatrix &right, const int m, const int n) {
+  return left.get(m, n) + right.get(m, n);
+}
+
+ComplexVectSplit sum_mat_mat_row(const ComplexVectMatrix &left,
+                                 const ComplexVectMatrix &right,
+                                 const int row) {
+  ComplexVectSplit vect_left = left.get_row(row);
+  ComplexVectSplit vect_right = right.get_row(row);
+
+  std::vector<__complex_precision> result_real(vect_left.size()),
+      result_imag(vect_left.size());
+
+  vDSP_vadd(vect_left.real().data(), 1, vect_right.real().data(), 1,
+            result_real.data(), 1, result_real.size());
+  vDSP_vadd(vect_left.imag().data(), 1, vect_right.imag().data(), 1,
+            result_imag.data(), 1, result_imag.size());
+
+  return ComplexVectSplit(result_real, result_imag);
+}
+
+Complex sum_op_op(const Operation &left, const Operation &right, const int m,
+                  const int n) {
+  return left.get(m, n) + right.get(m, n);
+}
+
+ComplexVectSplit sum_op_op_row(const Operation &left, const Operation &right,
+                               const int row) {
+  ComplexVectSplit vect_left = left.get(row);
+  ComplexVectSplit vect_right = right.get(row);
+
+  std::vector<__complex_precision> result_real(vect_left.size()),
+      result_imag(vect_left.size());
+
+  vDSP_vadd(vect_left.real().data(), 1, vect_right.real().data(), 1,
+            result_real.data(), 1, result_real.size());
+  vDSP_vadd(vect_left.imag().data(), 1, vect_right.imag().data(), 1,
+            result_imag.data(), 1, result_imag.size());
+
+  return ComplexVectSplit(result_real, result_imag);
+}
+
+int sum_row_size(const int left_row_size, const int left_column_size,
+                 const int right_row_size, const int right_column_size) {
+  return left_row_size;
+}
+
+int sum_column_size(const int left_row_size, const int left_column_size,
+                    const int right_row_size, const int right_column_size) {
+  return left_column_size;
 }
 
 /*
  * Tensor product
  */
-Complex tensor_product_lazy(const std::unique_ptr<OpMember> &left,
-                            const std::unique_ptr<OpMember> &right, const int m,
-                            const int n) {
-  const auto a_val = left->get(m / right->row_size(), n / right->column_size());
-  const auto b_val =
-      right->get(m % right->row_size(), n % right->column_size());
+Complex tensor_product_mat_mat(const ComplexVectMatrix &left,
+                               const ComplexVectMatrix &right, const int m,
+                               const int n) {
+  const auto a_val = left.get(m / right.row_size(), n / right.column_size());
+  const auto b_val = right.get(m % right.row_size(), n % right.column_size());
   return a_val * b_val;
 }
 
-int tensor_product_final_row_size(const OpMember &left, const OpMember &right) {
-  return left.row_size() * right.row_size();
+Complex tensor_product_op_mat(const Operation &left,
+                              const ComplexVectMatrix &right, const int m,
+                              const int n) {
+  const auto a_val = left.get(m / right.row_size(), n / right.column_size());
+  const auto b_val = right.get(m % right.row_size(), n % right.column_size());
+  return a_val * b_val;
 }
 
-int tensor_product_final_column_size(const OpMember &left,
-                                     const OpMember &right) {
-  return left.column_size() * right.column_size();
+ComplexVectSplit tensor_product_mat_mat_row(const ComplexVectMatrix &left,
+                                            const ComplexVectMatrix &right,
+                                            const int row) {
+  ComplexVectSplit vect_left, vect_right;
+  const auto right_row_size = right.row_size();
+  const auto right_column_size = right.column_size();
+  const auto final_row_size = left.row_size() * right_row_size;
+
+  for (int n = 0; n < final_row_size; n++) {
+    vect_left.add(left.get(row / right_row_size, n / right_column_size));
+    vect_right.add(right.get(row % right_row_size, n % right_column_size));
+  }
+
+  return cvmul(vect_left, vect_right);
+}
+
+ComplexVectSplit tensor_product_op_mat_row(const Operation &left,
+                                           const ComplexVectMatrix &right,
+                                           const int row) {
+  ComplexVectSplit vect_left, vect_right;
+  const auto right_row_size = right.row_size();
+  const auto right_column_size = right.column_size();
+  const auto final_row_size = left.row_size() * right_row_size;
+
+  for (int n = 0; n < final_row_size; n++) {
+    vect_left.add(left.get(row / right_row_size, n / right_column_size));
+    vect_right.add(right.get(row % right_row_size, n % right_column_size));
+  }
+
+  return cvmul(vect_left, vect_right);
+}
+
+int tensor_product_final_row_size(int row_size_left, int column_size_left,
+                                  int row_size_right, int column_size_right) {
+  return row_size_left * row_size_right;
+}
+
+int tensor_product_final_column_size(int row_size_left, int column_size_left,
+                                     int row_size_right,
+                                     int column_size_right) {
+  return column_size_left * column_size_right;
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::conjugate_transpose(std::unique_ptr<OpMember> mat) {
-  int final_row_size = mat->column_size();
-  int final_column_size = mat->row_size();
+AlgebraEngine::conjugate_transpose(const ComplexVectMatrix &mat) {
+  int final_row_size = mat.column_size();
+  int final_column_size = mat.row_size();
   return std::make_unique<LazyOperation>(
-      std::move(mat), std::make_unique<ComplexVectMatrix>(),
-      conjugate_transpose_lazy, final_row_size, final_column_size);
+      mat, ComplexVectMatrix(), conjugate_transpose_lazy,
+      conjugate_transpose_row, final_row_size, final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::inner_product(std::unique_ptr<OpMember> vect_left,
-                             std::unique_ptr<OpMember> vect_right) {
-  if (vect_left->row_size() != 1 || vect_right->row_size() != 1) {
+AlgebraEngine::inner_product(const ComplexVectMatrix &vect_left,
+                             const ComplexVectMatrix &vect_right) {
+  if (vect_left.row_size() != 1 || vect_right.row_size() != 1) {
     throw std::invalid_argument("Input must be vectors");
   }
-  return std::make_unique<LazyOperation>(
-      std::move(vect_left), std::move(vect_right), inner_product_lazy, 1, 1);
+  return std::make_unique<LazyOperation>(vect_left, std::move(vect_right),
+                                         inner_product_mat_mat,
+                                         inner_product_mat_mat_row, 1, 1);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::matrix_multiplication(std::unique_ptr<OpMember> mat_left,
-                                     std::unique_ptr<OpMember> mat_right) {
-  int final_row_size = mat_left->row_size();
-  int final_column_size = mat_right->column_size();
+AlgebraEngine::matrix_multiplication(const ComplexVectMatrix &mat_left,
+                                     const ComplexVectMatrix &mat_right) {
+  int final_row_size = mat_left.row_size();
+  int final_column_size = mat_right.column_size();
   return std::make_unique<LazyOperation>(
-      std::move(mat_left), std::move(mat_right), matrix_multiplication_lazy,
-      final_row_size, final_column_size);
+      mat_left, mat_right, matrix_multiplication_mat_mat,
+      matrix_multiplication_mat_mat_row, final_row_size, final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::matrix_vector_product(std::unique_ptr<OpMember> mat,
-                                     std::unique_ptr<OpMember> vect) {
-  int final_column_size = vect->column_size();
-  return std::make_unique<LazyOperation>(std::move(mat), std::move(vect),
-                                         matrix_multiplication_lazy, 1,
+AlgebraEngine::matrix_vector_product(const ComplexVectMatrix &mat,
+                                     const ComplexVectMatrix &vect) {
+  int final_column_size = vect.column_size();
+  return std::make_unique<LazyOperation>(mat, vect, matrix_vector_mul_mat_mat,
+                                         matrix_vector_mul_mat_mat_row, 1,
                                          final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::outer_product(std::unique_ptr<OpMember> mat_left,
-                             std::unique_ptr<OpMember> mat_right) {
-  int final_row_size = mat_left->column_size();
-  int final_column_size = mat_right->column_size();
+AlgebraEngine::matrix_vector_product(std::unique_ptr<LazyOperation> mat,
+                                     const ComplexVectMatrix &vect) {
+  auto op = std::move(mat);
+  op->append(vect, matrix_multiplication_op_mat,
+             matrix_multiplication_op_mat_row,
+             matrix_multiplication_final_row_size,
+             matrix_multiplication_final_column_size);
+
+  return std::move(op);
+}
+
+std::unique_ptr<LazyOperation>
+AlgebraEngine::matrix_vector_product(std::unique_ptr<LazyOperation> mat,
+                                     std::unique_ptr<LazyOperation> vect) {
+  auto op = std::move(mat);
+  op->append(*std::move(vect), matrix_vector_mul_op_op,
+             matrix_vector_mul_op_op_row, matrix_multiplication_final_row_size,
+             matrix_multiplication_final_column_size);
+
+  return std::move(op);
+}
+
+std::unique_ptr<LazyOperation>
+AlgebraEngine::outer_product(const ComplexVectMatrix &mat_left,
+                             const ComplexVectMatrix &mat_right) {
+  int final_row_size = mat_left.column_size();
+  int final_column_size = mat_right.column_size();
   return std::make_unique<LazyOperation>(
-      std::move(mat_left), std::move(mat_right), outer_product_lazy,
+      mat_left, mat_right, outer_product_mat_mat, outer_product_mat_mat_row,
       final_row_size, final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::scalar_product(std::unique_ptr<OpMember> mat, const Complex &k) {
-  int final_row_size = mat->row_size();
-  int final_column_size = mat->column_size();
+AlgebraEngine::scalar_product(const ComplexVectMatrix &mat, const Complex &k) {
+  int final_row_size = mat.row_size();
+  int final_column_size = mat.column_size();
   return std::make_unique<LazyOperation>(
-      std::move(mat), std::make_unique<ComplexVectMatrix>(k),
-      scalar_product_lazy, final_row_size, final_column_size);
+      mat, ComplexVectMatrix(k), scalar_product_mat_mat,
+      scalar_product_mat_mat_row, final_row_size, final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::sum(std::unique_ptr<OpMember> mat_left,
-                   std::unique_ptr<OpMember> mat_right) {
-  int mat_left_row_size = mat_left->row_size();
-  int mat_right_column_size = mat_right->column_size();
-  if (mat_left_row_size != mat_right->row_size() ||
-      mat_left->column_size() != mat_right_column_size) {
+AlgebraEngine::sum(const ComplexVectMatrix &mat_left,
+                   const ComplexVectMatrix &mat_right) {
+  int mat_left_row_size = mat_left.row_size();
+  int mat_right_column_size = mat_right.column_size();
+  if (mat_left_row_size != mat_right.row_size() ||
+      mat_left.column_size() != mat_right_column_size) {
     throw std::invalid_argument("Matrix sizes do not match");
   }
-  return std::make_unique<LazyOperation>(
-      std::move(mat_left), std::move(mat_right), sum_lazy, mat_left_row_size,
-      mat_right_column_size);
+  return std::make_unique<LazyOperation>(mat_left, mat_right, sum_mat_mat,
+                                         sum_mat_mat_row, mat_left_row_size,
+                                         mat_right_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::tensor_product(std::unique_ptr<OpMember> mat_left,
-                              std::unique_ptr<OpMember> mat_right) {
-  int final_row_size = mat_left->row_size() * mat_right->row_size();
-  int final_column_size = mat_left->column_size() * mat_right->column_size();
+AlgebraEngine::sum(const ComplexVectMatrix &mat_left,
+                   const LazyOperation &mat_right) {
+  int mat_left_row_size = mat_left.row_size();
+  int mat_right_column_size = mat_right.column_size();
+  if (mat_left_row_size != mat_right.row_size() ||
+      mat_left.column_size() != mat_right_column_size) {
+    throw std::invalid_argument("Matrix sizes do not match");
+  }
+  auto lazy = std::make_unique<LazyOperation>(mat_left);
+  lazy->append(mat_right, sum_op_op, sum_op_op_row, sum_row_size,
+               sum_column_size);
+  return std::move(lazy);
+}
+
+std::unique_ptr<LazyOperation>
+AlgebraEngine::tensor_product(const ComplexVectMatrix &mat_left,
+                              const ComplexVectMatrix &mat_right) {
+  int final_row_size = mat_left.row_size() * mat_right.row_size();
+  int final_column_size = mat_left.column_size() * mat_right.column_size();
   return std::make_unique<LazyOperation>(
-      std::move(mat_left), std::move(mat_right), tensor_product_lazy,
+      mat_left, mat_right, tensor_product_mat_mat, tensor_product_mat_mat_row,
       final_row_size, final_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::tensor_product(std::unique_ptr<OpMember> mat, const int times) {
+AlgebraEngine::tensor_product(const ComplexVectMatrix &mat, const int times) {
   if (times == 1) {
-    return std::make_unique<LazyOperation>(std::move(mat));
+    return std::make_unique<LazyOperation>(mat);
   }
 
-  int final_row_size = tensor_product_final_row_size(*mat, *mat);
-  int final_column_size = tensor_product_final_column_size(*mat, *mat);
+  int final_row_size = mat.row_size() * mat.row_size();
+  int final_column_size = mat.column_size() * mat.column_size();
 
   auto lazy = std::make_unique<LazyOperation>(
-      mat->clone(), mat->clone(), tensor_product_lazy, final_row_size,
-      final_column_size);
+      mat, mat, tensor_product_mat_mat, tensor_product_mat_mat_row,
+      final_row_size, final_column_size);
 
   for (int _ = 2; _ < times; _++) {
-    lazy->push(std::make_unique<LazyOperation>(mat->clone()),
-               tensor_product_lazy, tensor_product_final_row_size,
-               tensor_product_final_column_size);
+    lazy->append(mat, tensor_product_op_mat, tensor_product_op_mat_row,
+                 tensor_product_final_row_size,
+                 tensor_product_final_column_size);
   }
   return lazy;
 }
 
-bool AlgebraEngine::is_unitary(const OpMember &mat) {
+bool AlgebraEngine::is_unitary(const ComplexVectMatrix &mat) {
   if (mat.row_size() != mat.column_size()) {
     return false;
   }
 
-  auto a_dagger = AlgebraEngine::conjugate_transpose(mat.clone());
-  int final_row_size = matrix_multiplication_final_row_size(mat, *a_dagger);
-  int final_column_size =
-      matrix_multiplication_final_column_size(mat, *a_dagger);
-  auto lazy = std::make_unique<LazyOperation>(
-      mat.clone(), std::move(a_dagger), matrix_multiplication_lazy,
-      final_row_size, final_column_size);
+  auto a_dagger = AlgebraEngine::conjugate_transpose(mat);
+  auto lazy = std::make_unique<LazyOperation>(mat);
+  lazy->append(*a_dagger, matrix_multiplication_op_op,
+               matrix_multiplication_op_op_row,
+               matrix_multiplication_final_row_size,
+               matrix_multiplication_final_column_size);
 
   // TODO: Improve with multi-threading if fat matrix?
   // lazy should be an identity matrix
@@ -231,6 +605,20 @@ bool AlgebraEngine::is_unitary(const OpMember &mat) {
         }
       }
     }
+
+    /*
+    if (!approx_equal(lazy->get(m, m), Complex(1, 0))) {
+      return false;
+    }
+    auto row_split = lazy->get(m, 0, m, lazy->column_size() - 1);
+    __complex_precision sum_real, sum_imag = 0;
+    vDSP_sve(row_split.real().data(), 1, &sum_real, row_split.size());
+    vDSP_sve(row_split.imag().data(), 1, &sum_imag, row_split.size());
+
+    if (!approx_equal(Complex(sum_real, sum_imag), Complex(1, 0))) {
+      return false;
+    }
+    */
   }
   return true;
 }

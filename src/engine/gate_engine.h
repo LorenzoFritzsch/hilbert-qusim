@@ -10,11 +10,11 @@ public:
   GateEngine() = delete;
 
   static std::unique_ptr<LazyOperation>
-  apply_gate(std::unique_ptr<OpMember> gate, std::unique_ptr<OpMember> state);
+  apply_gate(const ComplexVectMatrix &gate, const ComplexVectMatrix &state);
 
   static std::unique_ptr<Qubit> controlled_u(const Qubit &target,
                                              const Qubit &control,
-                                             std::unique_ptr<OpMember> u);
+                                             const ComplexVectMatrix &u);
 
   static std::unique_ptr<Qubit> hadamard(const Qubit &qubit);
 

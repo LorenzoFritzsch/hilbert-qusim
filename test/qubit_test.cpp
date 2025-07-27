@@ -37,7 +37,7 @@ bool it_should_create_qubit_opmember() {
   auto qubit_vect = std::make_unique<ComplexVectMatrix>(ket_0);
 
   // When
-  const auto qubit = std::make_unique<Qubit>(std::move(qubit_vect));
+  const auto qubit = std::make_unique<Qubit>(*qubit_vect);
 
   // Then
   return are_matrices_equal(ComplexVectMatrix(ket_0), *qubit->to_vector());
@@ -49,7 +49,7 @@ bool it_should_not_create_qubit_invalid_opmember() {
 
   // When - Then
   try {
-    const auto qubit = std::make_unique<Qubit>(std::move(invalid_opmember));
+    const auto qubit = std::make_unique<Qubit>(*invalid_opmember);
     return false;
   } catch (const std::invalid_argument &e) {
     return true;
@@ -62,7 +62,7 @@ bool it_should_not_create_qubit_opmember_invalid_alpha_beta() {
 
   // When - Then
   try {
-    const auto qubit = std::make_unique<Qubit>(std::move(qubit_vect));
+    const auto qubit = std::make_unique<Qubit>(*qubit_vect);
     return false;
   } catch (const std::invalid_argument &e) {
     return true;
@@ -73,39 +73,36 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!it_should_create_qubit()) {
+  if (!run_test("it_should_create_qubit", it_should_create_qubit)) {
     failed++;
-    std::cout << "it_should_create_qubit failed" << std::endl;
   }
   total++;
 
-  if (!it_should_not_create_qubit_with_invalid_alpha_beta()) {
+  if (!run_test("it_should_not_create_qubit_with_invalid_alpha_beta",
+                it_should_not_create_qubit_with_invalid_alpha_beta)) {
     failed++;
-    std::cout << "it_should_not_create_qubit_with_invalid_alpha_beta failed"
-              << std::endl;
   }
   total++;
 
-  if (!it_should_create_qubit_opmember()) {
+  if (!run_test("it_should_create_qubit_opmember",
+                it_should_create_qubit_opmember)) {
     failed++;
-    std::cout << "it_should_create_qubit_opmember failed" << std::endl;
   }
   total++;
 
-  if (!it_should_not_create_qubit_invalid_opmember()) {
+  if (!run_test("it_should_not_create_qubit_invalid_opmember",
+                it_should_not_create_qubit_invalid_opmember)) {
     failed++;
-    std::cout << "it_should_not_create_qubit_invalid_opmember failed"
-              << std::endl;
   }
   total++;
 
-  if (!it_should_not_create_qubit_opmember_invalid_alpha_beta()) {
+  if (!run_test("it_should_not_create_qubit_opmember_invalid_alpha_beta",
+                it_should_not_create_qubit_opmember_invalid_alpha_beta)) {
     failed++;
-    std::cout << "it_should_not_create_qubit_opmember_invalid_alpha_beta failed"
-              << std::endl;
   }
   total++;
 
-  std::cout << "Run: " << total << ", failed: " << failed << std::endl;
+  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
+            << std::endl;
   return failed == 0 ? 0 : 1;
 }

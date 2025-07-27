@@ -19,7 +19,9 @@ add_library(hilbert STATIC
         src/core/lazy_operation.cpp
         src/core/complex_vectorised_matrix.h
         src/core/operation.h
-        src/core/operation_member.h)
+        src/core/complex_vector_split.h)
+
+target_link_libraries(hilbert PUBLIC "$<LINK_LIBRARY:FRAMEWORK,Accelerate>")
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
                                          ${CMAKE_BINARY_DIR}/lib)
