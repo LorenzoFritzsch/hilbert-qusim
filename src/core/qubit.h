@@ -58,8 +58,7 @@ public:
   }
 
   [[nodiscard]] std::unique_ptr<ComplexVectMatrix> to_vector() const {
-    return std::make_unique<ComplexVectMatrix>(
-        ComplexVector(std::initializer_list{alpha, beta}));
+    return std::make_unique<ComplexVectMatrix>(ComplexVector({alpha, beta}));
   }
 
 private:
