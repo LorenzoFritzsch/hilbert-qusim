@@ -21,7 +21,30 @@ add_library(hilbert STATIC
         src/core/operation.h
         src/core/complex_vector_split.h)
 
-target_link_libraries(hilbert PUBLIC "$<LINK_LIBRARY:FRAMEWORK,Accelerate>")
+if(APPLE)
+  # Check the processor architecture
+  execute_process(
+    COMMAND uname -m
+    OUTPUT_VARIABLE ARCHITECTURE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  target_link_libraries(hilbert PUBLIC "$<LINK_LIBRARY:FRAMEWORK,Accelerate>")
+  if(ARCHITECTURE STREQUAL "arm64")
+    message(STATUS "Configuring for Apple Silicon (arm64)")
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
+    # Apple Silicon specific settings
+  elseif(ARCHITECTURE STREQUAL "x86_64")
+    message(STATUS "Configuring for Intel macOS (x86_64)")
+    set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "" FORCE)
+    # Intel macOS specific settings
+  endif()
+else()
+  # Non-Apple systems
+  message(STATUS "Configuring for non-Apple or Intel PC")
+  set(CMAKE_OSX_ARCHITECTURES "" CACHE STRING "" FORCE)
+  # Intel PC specific settings (if any)
+endif()
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
                                          ${CMAKE_BINARY_DIR}/lib)

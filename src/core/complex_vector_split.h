@@ -5,7 +5,9 @@
 #include <stdexcept>
 #include <vector>
 
+#if defined(__APPLE__)
 #include <Accelerate/Accelerate.h>
+#endif
 
 class ComplexVectSplit {
 public:
@@ -52,7 +54,10 @@ public:
   ComplexVectSplit conj() {
     __complex_precision k = -1;
     std::vector<__complex_precision> imag_conj(imag_.size());
+
+#if defined(__APPLE__)
     vDSP_vsmul(imag_.data(), 1, &k, imag_conj.data(), 1, imag_conj.size());
+#endif
     return ComplexVectSplit(real_, imag_conj);
   }
 

@@ -8,7 +8,9 @@
 #include <complex>
 #include <memory>
 
+#if defined(__APPLE__)
 #include <Accelerate/Accelerate.h>
+#endif
 
 /*
  * SIMD element-wise complex vector multiplication
@@ -28,6 +30,7 @@ ComplexVectSplit cvmul(const ComplexVectSplit &left,
   auto right_real = right.real();
   auto right_imag = right.imag();
 
+#if defined(__APPLE__)
   vDSP_vmul(left_real.data(), 1, right_real.data(), 1, ac_vect.data(), 1,
             ac_vect.size());
   vDSP_vmul(left_imag.data(), 1, right_imag.data(), 1, bd_vect.data(), 1,
@@ -41,6 +44,72 @@ ComplexVectSplit cvmul(const ComplexVectSplit &left,
             result_real.size());
   vDSP_vadd(ad_vect.data(), 1, bc_vect.data(), 1, result_imag.data(), 1,
             result_imag.size());
+#endif
+
+  return ComplexVectSplit(result_real, result_imag);
+}
+
+/*
+ * SIMD sum over each element of the vector.
+ */
+Complex cvsve(const ComplexVectSplit &vect) {
+  __complex_precision result_real = 0;
+  __complex_precision result_imag = 0;
+  auto vect_size = vect.size();
+
+#if defined(__APPLE__)
+  vDSP_sve(vect.real().data(), 1, &result_real, vect_size);
+  vDSP_sve(vect.imag().data(), 1, &result_imag, vect_size);
+#endif
+
+  return Complex(result_real, result_imag);
+}
+
+/*
+ * SIMD element-wise sum of two vectors.
+ */
+ComplexVectSplit cvadd(const ComplexVectSplit &left,
+                       const ComplexVectSplit &right) {
+  std::vector<__complex_precision> result_real(left.size()),
+      result_imag(left.size());
+
+#if defined(__APPLE__)
+  vDSP_vadd(left.real().data(), 1, right.real().data(), 1, result_real.data(),
+            1, result_real.size());
+  vDSP_vadd(left.imag().data(), 1, right.imag().data(), 1, result_imag.data(),
+            1, result_imag.size());
+#endif
+
+  return ComplexVectSplit(result_real, result_imag);
+}
+
+/*
+ * SIMD scalar product.
+ */
+ComplexVectSplit cvsmul(const ComplexVectSplit &vect, const Complex &k) {
+  auto vect_real = vect.real();
+  auto vect_imag = vect.imag();
+  auto k_real = static_cast<__complex_precision>(k.real());
+  auto k_imag = static_cast<__complex_precision>(k.imag());
+
+  // Considering the formula (a + bi)(c + di) = (ac - bd) + i(ad + bc):
+  std::vector<__complex_precision> vect_ac(vect.size()), vect_bd(vect.size()),
+      vect_ad(vect.size()), vect_bc(vect.size());
+
+  std::vector<__complex_precision> result_real(vect.size()),
+      result_imag(vect.size());
+
+#if defined(__APPLE__)
+  vDSP_vsmul(vect_real.data(), 1, &k_real, vect_ac.data(), 1, vect_ac.size());
+  vDSP_vsmul(vect_imag.data(), 1, &k_imag, vect_bd.data(), 1, vect_bd.size());
+  vDSP_vsmul(vect_real.data(), 1, &k_imag, vect_ad.data(), 1, vect_ad.size());
+  vDSP_vsmul(vect_imag.data(), 1, &k_real, vect_bc.data(), 1, vect_bc.size());
+
+  vDSP_vsub(vect_bd.data(), 1, vect_ac.data(), 1, result_real.data(), 1,
+            result_real.size());
+  vDSP_vadd(vect_ad.data(), 1, vect_bc.data(), 1, result_imag.data(), 1,
+            result_imag.size());
+#endif
 
   return ComplexVectSplit(result_real, result_imag);
 }
@@ -74,10 +143,8 @@ Complex inner_product_mat_mat(const ComplexVectMatrix &left,
 
   __complex_precision result_real = 0;
   __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
 
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit inner_product_mat_mat_row(const ComplexVectMatrix &left,
@@ -102,12 +169,7 @@ Complex matrix_multiplication_op_op(const Operation &left,
 
   auto elements = cvmul(vect_left, vect_right);
 
-  __complex_precision result_real = 0;
-  __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit matrix_multiplication_op_op_row(const Operation &left,
@@ -131,12 +193,7 @@ Complex matrix_multiplication_mat_mat(const ComplexVectMatrix &left,
 
   auto elements = cvmul(vect_left, vect_right);
 
-  __complex_precision result_real = 0;
-  __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit
@@ -148,12 +205,7 @@ matrix_multiplication_mat_mat_row(const ComplexVectMatrix &left,
   for (int n = 0; n < right.column_size(); n++) {
     auto column_right = right.get_column(n);
     auto elements = cvmul(row_left, column_right);
-
-    __complex_precision result_real = 0;
-    __complex_precision result_imag = 0;
-    vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-    vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-    result.add(Complex(result_real, result_imag));
+    result.add(cvsve(elements));
   }
   return result;
 }
@@ -166,12 +218,7 @@ Complex matrix_multiplication_op_mat(const Operation &left,
 
   auto elements = cvmul(vect_left, vect_right);
 
-  __complex_precision result_real = 0;
-  __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit matrix_multiplication_op_mat_row(
@@ -181,12 +228,7 @@ ComplexVectSplit matrix_multiplication_op_mat_row(
   for (int n = 0; n < right.column_size(); n++) {
     auto column_right = right.get_column(n);
     auto elements = cvmul(row_left, column_right);
-
-    __complex_precision result_real = 0;
-    __complex_precision result_imag = 0;
-    vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-    vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-    result.add(Complex(result_real, result_imag));
+    result.add(cvsve(elements));
   }
   return result;
 }
@@ -197,13 +239,7 @@ Complex matrix_vector_mul_mat_mat(const ComplexVectMatrix &left,
   auto vect_left = left.get_row(col);
   auto vect_right = right.split();
   auto elements = cvmul(vect_left, vect_right);
-
-  __complex_precision result_real = 0;
-  __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit matrix_vector_mul_mat_mat_row(const ComplexVectMatrix &left,
@@ -226,12 +262,7 @@ Complex matrix_vector_mul_op_op(const Operation &left, const Operation &right,
 
   auto elements = cvmul(vect_left, vect_right);
 
-  __complex_precision result_real = 0;
-  __complex_precision result_imag = 0;
-  vDSP_sve(elements.real().data(), 1, &result_real, elements.size());
-  vDSP_sve(elements.imag().data(), 1, &result_imag, elements.size());
-
-  return Complex(result_real, result_imag);
+  return cvsve(elements);
 }
 
 ComplexVectSplit matrix_vector_mul_op_op_row(const Operation &left,
@@ -289,35 +320,8 @@ ComplexVectSplit scalar_product_mat_mat_row(const ComplexVectMatrix &left,
                                             const ComplexVectMatrix &right,
                                             const int row) {
   auto vect_left = left.get_row(row);
-  auto vect_left_real = vect_left.real();
-  auto vect_left_imag = vect_left.imag();
   auto k = right.get(0, 0);
-  auto k_real = static_cast<__complex_precision>(k.real());
-  auto k_imag = static_cast<__complex_precision>(k.imag());
-
-  // Considering the formula (a + bi)(c + di) = (ac - bd) + i(ad + bc):
-  std::vector<__complex_precision> vect_ac(vect_left.size()),
-      vect_bd(vect_left.size()), vect_ad(vect_left.size()),
-      vect_bc(vect_left.size());
-
-  std::vector<__complex_precision> result_real(vect_left.size()),
-      result_imag(vect_left.size());
-
-  vDSP_vsmul(vect_left_real.data(), 1, &k_real, vect_ac.data(), 1,
-             vect_ac.size());
-  vDSP_vsmul(vect_left_imag.data(), 1, &k_imag, vect_bd.data(), 1,
-             vect_bd.size());
-  vDSP_vsmul(vect_left_real.data(), 1, &k_imag, vect_ad.data(), 1,
-             vect_ad.size());
-  vDSP_vsmul(vect_left_imag.data(), 1, &k_real, vect_bc.data(), 1,
-             vect_bc.size());
-
-  vDSP_vsub(vect_bd.data(), 1, vect_ac.data(), 1, result_real.data(), 1,
-            result_real.size());
-  vDSP_vadd(vect_ad.data(), 1, vect_bc.data(), 1, result_imag.data(), 1,
-            result_imag.size());
-
-  return ComplexVectSplit(result_real, result_imag);
+  return cvsmul(vect_left, k);
 }
 
 /*
@@ -334,15 +338,7 @@ ComplexVectSplit sum_mat_mat_row(const ComplexVectMatrix &left,
   ComplexVectSplit vect_left = left.get_row(row);
   ComplexVectSplit vect_right = right.get_row(row);
 
-  std::vector<__complex_precision> result_real(vect_left.size()),
-      result_imag(vect_left.size());
-
-  vDSP_vadd(vect_left.real().data(), 1, vect_right.real().data(), 1,
-            result_real.data(), 1, result_real.size());
-  vDSP_vadd(vect_left.imag().data(), 1, vect_right.imag().data(), 1,
-            result_imag.data(), 1, result_imag.size());
-
-  return ComplexVectSplit(result_real, result_imag);
+  return cvadd(vect_left, vect_right);
 }
 
 Complex sum_op_op(const Operation &left, const Operation &right, const int m,
@@ -355,15 +351,7 @@ ComplexVectSplit sum_op_op_row(const Operation &left, const Operation &right,
   ComplexVectSplit vect_left = left.get(row);
   ComplexVectSplit vect_right = right.get(row);
 
-  std::vector<__complex_precision> result_real(vect_left.size()),
-      result_imag(vect_left.size());
-
-  vDSP_vadd(vect_left.real().data(), 1, vect_right.real().data(), 1,
-            result_real.data(), 1, result_real.size());
-  vDSP_vadd(vect_left.imag().data(), 1, vect_right.imag().data(), 1,
-            result_imag.data(), 1, result_imag.size());
-
-  return ComplexVectSplit(result_real, result_imag);
+  return cvadd(vect_left, vect_right);
 }
 
 int sum_row_size(const int left_row_size, const int left_column_size,
