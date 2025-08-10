@@ -65,41 +65,29 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
 }
 
 std::unique_ptr<ComplexVectMatrix> LazyOperation::to_matrix() const {
-  const auto elements_size = row_size() * column_size();
   const auto num_threads =
       static_cast<int>(std::thread::hardware_concurrency());
-  const auto chunk_size = static_cast<int>(
-      std::ceil(static_cast<double>(elements_size) / num_threads));
+  const auto rows_per_thread =
+      static_cast<int>(std::ceil(static_cast<float>(row_size()) / num_threads));
   auto threads = std::vector<std::thread>(num_threads);
 
-  auto result = ComplexVector(elements_size);
-  for (int i = 0; i < row_size(); i++) {
-    auto res = get(i).get();
-    result.insert(result.begin() + i * column_size(), res.begin(), res.end());
-  }
-  /*
+  auto result = ComplexVector(row_size() * column_size());
+  auto total_rows = row_size();
   for (int t = 0; t < num_threads; t++) {
-    int start_index = t * chunk_size;
-    int end_index = std::min(start_index + chunk_size, elements_size);
-    if (start_index >= elements_size) {
-      break;
-    }
+    int start_row = t * rows_per_thread;
+    int end_row = std::min(start_row + rows_per_thread, total_rows);
 
-    //    threads[t] = std::thread([&result, start_index, end_index, this] {
-    auto res = get(start_index / column_size(), start_index % column_size(),
-                   end_index / column_size(), end_index % column_size())
-                   ->get();
-    result.insert(result.begin() + start_index, res.begin(), res.end());
-    //   });
+    threads[t] = std::thread([&result, start_row, end_row, total_rows, this] {
+      for (int n = start_row; n < end_row; n++) {
+        auto res = get(n).get();
+        std::copy(res.begin(), res.end(), result.begin() + (n * total_rows));
+      }
+    });
   }
-  */
-
-  /*
   for (auto &t : threads) {
     if (t.joinable())
       t.join();
   }
-  */
 
   return std::make_unique<ComplexVectMatrix>(result, row_size(), column_size());
 }

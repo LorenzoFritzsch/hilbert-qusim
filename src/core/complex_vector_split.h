@@ -30,6 +30,10 @@ public:
 
   [[nodiscard]] std::vector<__complex_precision> imag() const { return imag_; }
 
+  [[nodiscard]] Complex get(const int i) const {
+    return Complex(real_[i], imag_[i]);
+  }
+
   [[nodiscard]] std::vector<Complex> get() const {
     std::vector<Complex> result(real_.size());
     for (int i = 0; i < real_.size(); i++) {

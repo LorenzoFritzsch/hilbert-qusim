@@ -3,6 +3,7 @@
 
 #include "complex_vector_split.h"
 #include "hilbert_namespace.h"
+#include <functional>
 
 class ComplexVectMatrix final {
 public:
@@ -39,6 +40,19 @@ public:
 
   [[nodiscard]] Complex get(const int m, const int n) const {
     return vectorised_matrix_.at(m * column_size_ + n);
+  }
+
+  [[nodiscard]] ComplexVectSplit
+  get(int row_size, std::function<int(int i)> m_functor,
+      std::function<int(int i)> n_functor) const {
+    ComplexVectSplit result;
+    for (int i = 0; i < row_size; i++) {
+      auto m = m_functor(i);
+      auto n = n_functor(i);
+      auto index = m * column_size_ + n;
+      result.add(vectorised_matrix_.at(index));
+    }
+    return result;
   }
 
   [[nodiscard]] ComplexVectSplit get_row(const int row) const {

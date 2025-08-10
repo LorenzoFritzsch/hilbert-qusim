@@ -395,6 +395,39 @@ Complex tensor_product_op_mat(const Operation &left,
   return a_val * b_val;
 }
 
+/*
+ * Tensor product left-hand elements, given the left-hand matrix of the
+ * operation and the range.
+ */
+ComplexVectSplit tplhe(const ComplexVectMatrix &left, const int row,
+                       const int row_size, const int right_row_size,
+                       const int right_column_size) {
+  return left.get(
+      row_size,
+      [row, right_row_size](int i) -> int { return row / right_row_size; },
+      [right_column_size](int i) -> int { return i / right_column_size; });
+}
+
+ComplexVectSplit tplhe(const Operation &left, const int row, const int row_size,
+                       const int right_row_size, const int right_column_size) {
+  ComplexVectSplit result;
+  int m = row / right_row_size;
+  auto left_row = left.get(m);
+  for (int n = 0; n < row_size; n++) {
+    result.add(left_row.get(n / right_column_size));
+  }
+  return result;
+}
+
+ComplexVectSplit tprhe(const ComplexVectMatrix &right, const int row,
+                       const int row_size, const int right_row_size,
+                       const int right_column_size) {
+  return right.get(
+      row_size,
+      [row, right_row_size](int i) -> int { return row % right_row_size; },
+      [right_column_size](int i) -> int { return i % right_column_size; });
+}
+
 ComplexVectSplit tensor_product_mat_mat_row(const ComplexVectMatrix &left,
                                             const ComplexVectMatrix &right,
                                             const int row) {
@@ -403,10 +436,10 @@ ComplexVectSplit tensor_product_mat_mat_row(const ComplexVectMatrix &left,
   const auto right_column_size = right.column_size();
   const auto final_row_size = left.row_size() * right_row_size;
 
-  for (int n = 0; n < final_row_size; n++) {
-    vect_left.add(left.get(row / right_row_size, n / right_column_size));
-    vect_right.add(right.get(row % right_row_size, n % right_column_size));
-  }
+  vect_left =
+      tplhe(left, row, final_row_size, right_row_size, right_column_size);
+  vect_right =
+      tprhe(right, row, final_row_size, right_row_size, right_column_size);
 
   return cvmul(vect_left, vect_right);
 }
@@ -419,10 +452,10 @@ ComplexVectSplit tensor_product_op_mat_row(const Operation &left,
   const auto right_column_size = right.column_size();
   const auto final_row_size = left.row_size() * right_row_size;
 
-  for (int n = 0; n < final_row_size; n++) {
-    vect_left.add(left.get(row / right_row_size, n / right_column_size));
-    vect_right.add(right.get(row % right_row_size, n % right_column_size));
-  }
+  vect_left =
+      tplhe(left, row, final_row_size, right_row_size, right_column_size);
+  vect_right =
+      tprhe(right, row, final_row_size, right_row_size, right_column_size);
 
   return cvmul(vect_left, vect_right);
 }

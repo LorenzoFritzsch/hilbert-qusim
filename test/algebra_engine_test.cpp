@@ -12,8 +12,10 @@
 #include <chrono>
 #endif
 
-bool verify_identity_matrix(const ComplexVectMatrix &matrix) {
-  if (matrix.row_size() != matrix.column_size()) {
+bool verify_identity_matrix(const ComplexVectMatrix &matrix,
+                            int expected_size) {
+  if (matrix.row_size() != matrix.column_size() ||
+      matrix.row_size() != expected_size) {
     return false;
   }
   for (auto m = 0; m < matrix.row_size(); m++) {
@@ -217,8 +219,7 @@ bool it_should_compute_matrix_power() {
             << format_with_dots(actual->row_size() * actual->column_size())
             << std::endl;
 #endif
-  return verify_identity_matrix(*actual) &&
-         actual->row_size() == std::pow(2, times);
+  return verify_identity_matrix(*actual, std::pow(2, times));
 }
 
 bool it_should_verify_unitarity() {

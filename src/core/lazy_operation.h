@@ -48,11 +48,9 @@ public:
   }
 
   explicit LazyOperation(const ComplexVectMatrix &mat) {
-    // TODO: Roll back to just 1 push
-    mat_vect_.push_back(mat);
     mat_vect_.push_back(mat);
     op_vect_.emplace_back(
-        0, 1, mat_vect_, op_vect_,
+        0, 0, mat_vect_, op_vect_,
         [this](const ComplexVectMatrix &left, const ComplexVectMatrix &,
                const int m, const int n) { return mat_vect_[0].get(m, n); },
         [this](const ComplexVectMatrix &left, const ComplexVectMatrix &right,
