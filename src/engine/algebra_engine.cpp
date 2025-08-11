@@ -10,7 +10,118 @@
 
 #if defined(__APPLE__)
 #include <Accelerate/Accelerate.h>
+#else
+#include <cstddef>
+#include <immintrin.h>
 #endif
+
+/*
+ * SIMD AVX vector multiplication.
+ */
+void vmul_avx(const __complex_precision *left, const __complex_precision *right,
+              __complex_precision *result, size_t length) {
+  size_t i = 0;
+  size_t element_size = sizeof(__complex_precision) * 8;
+  size_t elements_per_block = 256 / element_size;
+  for (; i + elements_per_block <= length; i += elements_per_block) {
+    __m256 vec_left = _mm256_loadu_ps(left + i);
+    __m256 vec_right = _mm256_loadu_ps(right + i);
+    __m256 vec_res = _mm256_mul_ps(vec_left, vec_right);
+    _mm256_storeu_ps(result + i, vec_res);
+  }
+  for (; i < length; i++) {
+    result[i] = left[i] * right[i];
+  }
+}
+
+/*
+ * SIMD AVX scalar-vector multiplication.
+ */
+void vsmul_avx(const __complex_precision *vect,
+               const __complex_precision &scalar, __complex_precision *result,
+               size_t length) {
+  __m256 scalar_vec = _mm256_set1_ps(scalar);
+
+  size_t i = 0;
+  size_t element_size = sizeof(__complex_precision) * 8;
+  size_t elements_per_block = 256 / element_size;
+  for (; i + elements_per_block <= length; i += elements_per_block) {
+    __m256 vec = _mm256_loadu_ps(vect + i);
+    __m256 res = _mm256_mul_ps(vec, scalar_vec);
+    _mm256_storeu_ps(result + i, res);
+  }
+  for (; i < length; i++) {
+    result[i] = vect[i] * scalar;
+  }
+}
+
+/*
+ * SIMD AVX vector subtraction, performed left - right.
+ */
+void vsub_avx(const __complex_precision *left, const __complex_precision *right,
+              __complex_precision *result, size_t length) {
+  size_t i = 0;
+  size_t element_size = sizeof(__complex_precision) * 8;
+  size_t elements_per_block = 256 / element_size;
+  for (; i + elements_per_block <= length; i += elements_per_block) {
+    __m256 vec_left = _mm256_loadu_ps(left + i);
+    __m256 vec_right = _mm256_loadu_ps(right + i);
+    __m256 vec_res = _mm256_sub_ps(vec_left, vec_right);
+    _mm256_storeu_ps(result + i, vec_res);
+  }
+  for (; i < length; i++) {
+    result[i] = left[i] - right[i];
+  }
+}
+
+/*
+ * SIMD AVX vector addition.
+ */
+void vadd_avx(const __complex_precision *left, const __complex_precision *right,
+              __complex_precision *result, size_t length) {
+  size_t i = 0;
+  size_t element_size = sizeof(__complex_precision) * 8;
+  size_t elements_per_block = 256 / element_size;
+  for (; i + elements_per_block <= length; i += elements_per_block) {
+    __m256 vec_left = _mm256_loadu_ps(left + i);
+    __m256 vec_right = _mm256_loadu_ps(right + i);
+    __m256 vec_res = _mm256_add_ps(vec_left, vec_right);
+    _mm256_storeu_ps(result + i, vec_res);
+  }
+  for (; i < length; i++) {
+    result[i] = left[i] + right[i];
+  }
+}
+
+/*
+ * SIMD AVX horizontal sum.
+ */
+__complex_precision hsum_avx(const __complex_precision *vect, size_t length) {
+  size_t i = 0;
+  size_t element_size = sizeof(__complex_precision) * 8;
+  size_t elements_per_block = 256 / element_size;
+  __m256 vsum = _mm256_setzero_ps();
+
+  for (; i + elements_per_block <= length; i += elements_per_block) {
+    __m256 v = _mm256_loadu_ps(vect + i);
+    vsum = _mm256_add_ps(vsum, v);
+  }
+
+  __m128 vlow = _mm256_castps256_ps128(vsum);
+  __m128 vhigh = _mm256_extractf128_ps(vsum, 1);
+  __m128 vsum128 = _mm_add_ps(vlow, vhigh);
+
+  vsum128 = _mm_hadd_ps(vsum128, vsum128);
+  vsum128 = _mm_hadd_ps(vsum128, vsum128);
+
+  float sum = _mm_cvtss_f32(vsum128);
+
+  for (; i < length; ++i) {
+    sum += vect[i];
+  }
+
+  return sum;
+}
 
 /*
  * SIMD element-wise complex vector multiplication
@@ -44,6 +155,16 @@ ComplexVectSplit cvmul(const ComplexVectSplit &left,
             result_real.size());
   vDSP_vadd(ad_vect.data(), 1, bc_vect.data(), 1, result_imag.data(), 1,
             result_imag.size());
+#else
+  vmul_avx(left_real.data(), right_real.data(), ac_vect.data(), ac_vect.size());
+  vmul_avx(left_imag.data(), right_imag.data(), bd_vect.data(), bd_vect.size());
+  vmul_avx(left_real.data(), right_imag.data(), ad_vect.data(), ad_vect.size());
+  vmul_avx(left_imag.data(), right_real.data(), bc_vect.data(), bc_vect.size());
+
+  vsub_avx(ac_vect.data(), bd_vect.data(), result_real.data(),
+           result_real.size());
+  vadd_avx(ad_vect.data(), bc_vect.data(), result_imag.data(),
+           result_imag.size());
 #endif
 
   return ComplexVectSplit(result_real, result_imag);
@@ -60,6 +181,9 @@ Complex cvsve(const ComplexVectSplit &vect) {
 #if defined(__APPLE__)
   vDSP_sve(vect.real().data(), 1, &result_real, vect_size);
   vDSP_sve(vect.imag().data(), 1, &result_imag, vect_size);
+#else
+  result_real = hsum_avx(vect.real().data(), vect_size);
+  result_imag = hsum_avx(vect.imag().data(), vect_size);
 #endif
 
   return Complex(result_real, result_imag);
@@ -78,6 +202,11 @@ ComplexVectSplit cvadd(const ComplexVectSplit &left,
             1, result_real.size());
   vDSP_vadd(left.imag().data(), 1, right.imag().data(), 1, result_imag.data(),
             1, result_imag.size());
+#else
+  vadd_avx(left.real().data(), right.real().data(), result_real.data(),
+           result_real.size());
+  vadd_avx(left.imag().data(), right.imag().data(), result_imag.data(),
+           result_imag.size());
 #endif
 
   return ComplexVectSplit(result_real, result_imag);
@@ -109,6 +238,16 @@ ComplexVectSplit cvsmul(const ComplexVectSplit &vect, const Complex &k) {
             result_real.size());
   vDSP_vadd(vect_ad.data(), 1, vect_bc.data(), 1, result_imag.data(), 1,
             result_imag.size());
+#else
+  vsmul_avx(vect_real.data(), k_real, vect_ac.data(), vect_ac.size());
+  vsmul_avx(vect_imag.data(), k_imag, vect_bd.data(), vect_bd.size());
+  vsmul_avx(vect_real.data(), k_imag, vect_ad.data(), vect_ad.size());
+  vsmul_avx(vect_imag.data(), k_real, vect_bc.data(), vect_bc.size());
+
+  vsub_avx(vect_ac.data(), vect_bd.data(), result_real.data(),
+           result_real.size());
+  vadd_avx(vect_ad.data(), vect_bc.data(), result_imag.data(),
+           result_imag.size());
 #endif
 
   return ComplexVectSplit(result_real, result_imag);

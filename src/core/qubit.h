@@ -53,12 +53,20 @@ public:
     this->beta = 0;
   }
 
+  [[nodiscard]] std::unique_ptr<ComplexVectMatrix> to_vector() const {
+    return std::make_unique<ComplexVectMatrix>(ComplexVector({alpha, beta}));
+  }
+
+  /*
+   * Even though these methods are quite against basic quantum information
+   * theory concepts, they are rather useful in testing scenarios.
+   */
   bool operator==(const Qubit &other) const {
     return approx_equal(alpha, other.alpha) && approx_equal(beta, other.beta);
   }
 
-  [[nodiscard]] std::unique_ptr<ComplexVectMatrix> to_vector() const {
-    return std::make_unique<ComplexVectMatrix>(ComplexVector({alpha, beta}));
+  bool operator!=(const Qubit &other) const {
+    return !approx_equal(alpha, other.alpha) && approx_equal(beta, other.beta);
   }
 
 private:

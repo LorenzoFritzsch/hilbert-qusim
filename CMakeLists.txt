@@ -22,28 +22,17 @@ add_library(hilbert STATIC
         src/core/complex_vector_split.h)
 
 if(APPLE)
-  # Check the processor architecture
-  execute_process(
-    COMMAND uname -m
-    OUTPUT_VARIABLE ARCHITECTURE
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-
+  message(STATUS "Configuring to run with Apple Accelerate")
   target_link_libraries(hilbert PUBLIC "$<LINK_LIBRARY:FRAMEWORK,Accelerate>")
-  if(ARCHITECTURE STREQUAL "arm64")
-    message(STATUS "Configuring for Apple Silicon (arm64)")
-    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
-    # Apple Silicon specific settings
-  elseif(ARCHITECTURE STREQUAL "x86_64")
-    message(STATUS "Configuring for Intel macOS (x86_64)")
-    set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "" FORCE)
-    # Intel macOS specific settings
-  endif()
 else()
-  # Non-Apple systems
-  message(STATUS "Configuring for non-Apple or Intel PC")
-  set(CMAKE_OSX_ARCHITECTURES "" CACHE STRING "" FORCE)
-  # Intel PC specific settings (if any)
+  message(STATUS "Configuring to run with AVX/AVX2 extensions")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(STATUS "Compiling with Clang/GCC")
+    target_compile_options(hilbert PRIVATE -mavx2 -mfma)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") 
+    message(STATUS "Compiling with MSVC")
+    target_compile_options(hilbert PRIVATE /arch:AVX2)
+  endif()
 endif()
 
 set_target_properties(hilbert PROPERTIES ARCHIVE_OUTPUT_DIRECTORY

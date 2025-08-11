@@ -99,6 +99,7 @@ public:
       return op(mat_vect_[left_index_], mat_vect_[right_index_], m, n);
     }
     }
+    throw std::logic_error("Unexpected OperationType");
   }
 
   [[nodiscard]] ComplexVectSplit get(const int row) const {
@@ -120,6 +121,7 @@ public:
       return op(mat_vect_[left_index_], mat_vect_[right_index_], row);
     }
     }
+    throw std::logic_error("Unexpected OperationType");
   }
 
   [[nodiscard]] int row_size() const { return row_size_; }
@@ -137,6 +139,7 @@ public:
     case MatrixMatrix:
       return mat_vect_[left_index_];
     }
+    throw std::logic_error("Unexpected OperationType");
   }
 
   [[nodiscard]] int left_index() const { return left_index_; }
@@ -150,6 +153,7 @@ public:
     case MatrixMatrix:
       return mat_vect_[right_index_];
     }
+    throw std::logic_error("Unexpected OperationType");
   }
 
   [[nodiscard]] int right_index() const { return right_index_; }

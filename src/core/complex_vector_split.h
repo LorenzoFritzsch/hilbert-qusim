@@ -7,6 +7,9 @@
 
 #if defined(__APPLE__)
 #include <Accelerate/Accelerate.h>
+#else
+#include <cstddef>
+#include <immintrin.h>
 #endif
 
 class ComplexVectSplit {
@@ -57,6 +60,22 @@ public:
 
 #if defined(__APPLE__)
     vDSP_vsmul(imag_.data(), 1, &k, imag_conj.data(), 1, imag_conj.size());
+#else
+    __m256 scalar_vec = _mm256_set1_ps(k);
+
+    size_t i = 0;
+    size_t element_size = sizeof(__complex_precision) * 8;
+    size_t elements_per_block = 256 / element_size;
+    auto src = imag_.data();
+    for (; i + elements_per_block <= imag_conj.size();
+         i += elements_per_block) {
+      __m256 vec = _mm256_loadu_ps(src + i);
+      __m256 result = _mm256_mul_ps(vec, scalar_vec);
+      _mm256_storeu_ps(imag_conj.data() + i, result);
+    }
+    for (; i < imag_conj.size(); i++) {
+      imag_conj[i] = src[i] * k;
+    }
 #endif
     return ComplexVectSplit(real_, imag_conj);
   }
