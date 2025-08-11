@@ -8,14 +8,39 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: macos-latest  # You can also add ubuntu-latest or other runners if cross-platform testing is needed
+    name: Build and Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
 
       - name: Install CMake
-        uses: lukka/get-cmake@latest  # Ensures latest CMake
+        uses: lukka/get-cmake@latest
 
-      - name: Build and run tests (Release)
-        run: make test
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install make
+
+      # Configure & build with CMake
+      - name: Configure project
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
