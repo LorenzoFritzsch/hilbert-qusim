@@ -13,7 +13,6 @@
 #else
 #include <cstddef>
 #include <immintrin.h>
-#endif
 
 /*
  * SIMD AVX vector multiplication.
@@ -122,6 +121,7 @@ __complex_precision hsum_avx(const __complex_precision *vect, size_t length) {
 
   return sum;
 }
+#endif
 
 /*
  * SIMD element-wise complex vector multiplication
