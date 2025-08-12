@@ -3,38 +3,14 @@
 #include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
 #include <initializer_list>
-#include <iostream>
 #include <memory>
 
 #define PERFORMANCE_TESTING 0
 
 #if PERFORMANCE_TESTING
 #include <chrono>
-#endif
+#include <iostream>
 
-bool verify_identity_matrix(const ComplexVectMatrix &matrix,
-                            int expected_size) {
-  if (matrix.row_size() != matrix.column_size() ||
-      matrix.row_size() != expected_size) {
-    return false;
-  }
-  for (auto m = 0; m < matrix.row_size(); m++) {
-    for (auto n = 0; n < matrix.column_size(); n++) {
-      if (m == n) {
-        if (matrix.get(m, n) != Complex(1, 0)) {
-          return false;
-        }
-      } else {
-        if (matrix.get(m, n) != Complex(0, 0)) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-#if PERFORMANCE_TESTING
 std::string format_with_dots(const unsigned long long number) {
   std::string num = std::to_string(number);
   int insertPosition = static_cast<int>(num.length()) - 3;
@@ -51,10 +27,9 @@ std::string format_with_dots(const unsigned long long number) {
 bool it_should_compute_conjugate_transpose() {
   // Given
   ComplexMatrix complex_mat = {{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}};
-  auto mat = std::make_unique<ComplexVectMatrix>(ComplexMatrix(complex_mat));
 
   // When
-  auto result = AlgebraEngine::conjugate_transpose(*mat);
+  auto result = AlgebraEngine::conjugate_transpose(complex_mat);
 
   // Then
   ComplexMatrix expected = {{{1, -1}, {2, -1}}, {{1, -2}, {2, -2}}};
@@ -251,66 +226,36 @@ int main() {
   int failed = 0;
 
 #if !PERFORMANCE_TESTING
-  if (!run_test("it_should_compute_conjugate_transpose",
-                it_should_compute_conjugate_transpose)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_conjugate_transpose",
+           it_should_compute_conjugate_transpose, failed, total);
 
-  if (!run_test("it_should_compute_inner_product",
-                it_should_compute_inner_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_inner_product", it_should_compute_inner_product,
+           failed, total);
 
-  if (!run_test("it_should_compute_tensor_product",
-                it_should_compute_tensor_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_tensor_product", it_should_compute_tensor_product,
+           failed, total);
 
-  if (!run_test("it_should_compute_scalar_product",
-                it_should_compute_scalar_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_scalar_product", it_should_compute_scalar_product,
+           failed, total);
 
-  if (!run_test("it_should_compute_scalar_vector_product",
-                it_should_compute_scalar_vector_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_scalar_vector_product",
+           it_should_compute_scalar_vector_product, failed, total);
 
-  if (!run_test("it_should_compute_sum", it_should_compute_sum)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_sum", it_should_compute_sum, failed, total);
 
-  if (!run_test("it_should_compute_outer_product",
-                it_should_compute_outer_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_outer_product", it_should_compute_outer_product,
+           failed, total);
 
-  if (!run_test("it_should_compute_matrix_vector_product",
-                it_should_compute_matrix_vector_product)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_matrix_vector_product",
+           it_should_compute_matrix_vector_product, failed, total);
 
 #endif
-  if (!run_test("it_should_verify_unitarity", it_should_verify_unitarity)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_verify_unitarity", it_should_verify_unitarity, failed,
+           total);
 
-  if (!run_test("it_should_compute_matrix_power",
-                it_should_compute_matrix_power)) {
-    failed += 1;
-  }
-  total++;
+  run_test("it_should_compute_matrix_power", it_should_compute_matrix_power,
+           failed, total);
 
-  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
-            << std::endl;
+  test_resumen(failed, total);
   return failed == 0 ? 0 : 1;
 }

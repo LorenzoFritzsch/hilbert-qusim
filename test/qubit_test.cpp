@@ -2,7 +2,6 @@
 #include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
 #include "qubit.h"
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 
@@ -32,7 +31,7 @@ bool it_should_not_create_qubit_with_invalid_alpha_beta() {
   }
 }
 
-bool it_should_create_qubit_opmember() {
+bool it_should_create_qubit_cvm() {
   // Given
   auto qubit_vect = std::make_unique<ComplexVectMatrix>(ket_0);
 
@@ -43,7 +42,7 @@ bool it_should_create_qubit_opmember() {
   return are_matrices_equal(ComplexVectMatrix(ket_0), *qubit->to_vector());
 }
 
-bool it_should_not_create_qubit_invalid_opmember() {
+bool it_should_not_create_qubit_invalid_cvm() {
   // Given
   auto invalid_opmember = std::make_unique<ComplexVectMatrix>(hadamard_2x2);
 
@@ -73,36 +72,21 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!run_test("it_should_create_qubit", it_should_create_qubit)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_create_qubit", it_should_create_qubit, failed, total);
 
-  if (!run_test("it_should_not_create_qubit_with_invalid_alpha_beta",
-                it_should_not_create_qubit_with_invalid_alpha_beta)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_not_create_qubit_with_invalid_alpha_beta",
+           it_should_not_create_qubit_with_invalid_alpha_beta, failed, total);
 
-  if (!run_test("it_should_create_qubit_opmember",
-                it_should_create_qubit_opmember)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_create_qubit_opmember", it_should_create_qubit_cvm,
+           failed, total);
 
-  if (!run_test("it_should_not_create_qubit_invalid_opmember",
-                it_should_not_create_qubit_invalid_opmember)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_not_create_qubit_invalid_opmember",
+           it_should_not_create_qubit_invalid_cvm, failed, total);
 
-  if (!run_test("it_should_not_create_qubit_opmember_invalid_alpha_beta",
-                it_should_not_create_qubit_opmember_invalid_alpha_beta)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_not_create_qubit_opmember_invalid_alpha_beta",
+           it_should_not_create_qubit_opmember_invalid_alpha_beta, failed,
+           total);
 
-  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
-            << std::endl;
+  test_resumen(failed, total);
   return failed == 0 ? 0 : 1;
 }

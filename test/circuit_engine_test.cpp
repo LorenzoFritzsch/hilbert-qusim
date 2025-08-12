@@ -1,38 +1,8 @@
 #include "circuit_engine.h"
-#include "complex_vectorised_matrix.h"
 #include "hilbert_namespace_test.h"
 #include "qubit.h"
 #include <cmath>
-#include <iostream>
-#include <memory>
 #include <vector>
-
-void print_states(const std::vector<Qubit> &state,
-                  const std::vector<Qubit> &result) {
-  for (int i = 0; i < state.size(); i++) {
-    auto left = state[i].to_vector();
-    auto right = result[i].to_vector();
-    std::cout << "(" << left->get(0, 0).real() << ", " << left->get(0, 0).imag()
-              << ")|0> + (" << left->get(0, 1).real() << ", "
-              << left->get(0, 1).imag() << ")|1> => ("
-              << right->get(0, 0).real() << ", " << right->get(0, 0).imag()
-              << ")|0> + (" << right->get(0, 1).real() << ", "
-              << right->get(0, 1).imag() << ")|1>" << std::endl;
-  }
-}
-
-bool are_states_equal(const std::vector<Qubit> &left,
-                      const std::vector<Qubit> &right) {
-  if (left.size() != right.size()) {
-    return false;
-  }
-  for (int i = 0; i < left.size(); i++) {
-    if (left[i] != right[i]) {
-      return false;
-    }
-  }
-  return true;
-}
 
 bool it_should_compute_qft() {
   // Given
@@ -77,18 +47,11 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!run_test("it_should_compute_qft", it_should_compute_qft)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_compute_qft", it_should_compute_qft, failed, total);
 
-  if (!run_test("it_should_compute_qft_and_inverse",
-                it_should_compute_qft_and_inverse)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_compute_qft_and_inverse",
+           it_should_compute_qft_and_inverse, failed, total);
 
-  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
-            << std::endl;
+  test_resumen(failed, total);
   return failed == 0 ? 0 : 1;
 }

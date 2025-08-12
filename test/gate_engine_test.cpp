@@ -2,7 +2,6 @@
 #include "gate_engine.h"
 #include "hilbert_namespace_test.h"
 #include <cmath>
-#include <iostream>
 #include <memory>
 
 bool it_should_apply_gate() {
@@ -48,23 +47,13 @@ int main() {
   int total = 0;
   int failed = 0;
 
-  if (!run_test("it_should_apply_gate", it_should_apply_gate)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_apply_gate", it_should_apply_gate, failed, total);
 
-  if (!run_test("it_should_apply_controlled_gate",
-                it_should_apply_controlled_gate)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_apply_controlled_gate", it_should_apply_controlled_gate,
+           failed, total);
 
-  if (!run_test("it_should_apply_hadamard", it_should_apply_hadamard)) {
-    failed++;
-  }
-  total++;
+  run_test("it_should_apply_hadamard", it_should_apply_hadamard, failed, total);
 
-  std::cout << "\033[1mRun: " << total << ", failed: " << failed << "\033[0m"
-            << std::endl;
+  test_resumen(failed, total);
   return failed == 0 ? 0 : 1;
 }
