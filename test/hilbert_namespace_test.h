@@ -19,7 +19,26 @@
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
 #include "qubit.h"
+#include <cstddef>
 #include <iostream>
+
+#define PERFORMANCE_TESTING 0
+
+#if PERFORMANCE_TESTING
+#include <chrono>
+
+std::string format_with_dots(const unsigned long long number) {
+  std::string num = std::to_string(number);
+  int insertPosition = static_cast<int>(num.length()) - 3;
+
+  while (insertPosition > 0) {
+    num.insert(insertPosition, ".");
+    insertPosition -= 3;
+  }
+
+  return num;
+}
+#endif
 
 inline bool are_matrices_equal(const ComplexVectMatrix &left,
                                const ComplexVectMatrix &right) {
@@ -27,8 +46,8 @@ inline bool are_matrices_equal(const ComplexVectMatrix &left,
       left.column_size() != right.column_size()) {
     return false;
   }
-  for (int i = 0; i < left.row_size(); i++) {
-    for (int j = 0; j < left.column_size(); j++) {
+  for (size_t i = 0; i < left.row_size(); i++) {
+    for (size_t j = 0; j < left.column_size(); j++) {
       if (left.get(i, j) != right.get(i, j)) {
         return false;
       }
@@ -43,8 +62,8 @@ inline bool are_matrices_equal(const ComplexVectMatrix &left,
       left.column_size() != right.column_size()) {
     return false;
   }
-  for (int i = 0; i < left.row_size(); i++) {
-    for (int j = 0; j < left.column_size(); j++) {
+  for (size_t i = 0; i < left.row_size(); i++) {
+    for (size_t j = 0; j < left.column_size(); j++) {
       if (left.get(i, j) != right.get(i, j)) {
         return false;
       }
@@ -58,7 +77,7 @@ inline bool are_states_equal(const std::vector<Qubit> &left,
   if (left.size() != right.size()) {
     return false;
   }
-  for (int i = 0; i < left.size(); i++) {
+  for (size_t i = 0; i < left.size(); i++) {
     if (left[i] != right[i]) {
       return false;
     }
@@ -67,7 +86,7 @@ inline bool are_states_equal(const std::vector<Qubit> &left,
 }
 
 inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
-                                   int expected_size) {
+                                   size_t expected_size) {
   if (matrix.row_size() != matrix.column_size() ||
       matrix.row_size() != expected_size) {
     return false;
@@ -90,7 +109,7 @@ inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
 
 inline void print_states(const std::vector<Qubit> &state,
                          const std::vector<Qubit> &result) {
-  for (int i = 0; i < state.size(); i++) {
+  for (size_t i = 0; i < state.size(); i++) {
     auto left = state[i].to_vector();
     auto right = result[i].to_vector();
     std::cout << "(" << left->get(0, 0).real() << ", " << left->get(0, 0).imag()

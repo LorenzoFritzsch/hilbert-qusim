@@ -66,7 +66,7 @@ public:
                  const ComplexVectMatrix &mat_right);
 
   static std::unique_ptr<LazyOperation>
-  tensor_product(const ComplexVectMatrix &mat, int times);
+  tensor_product(const ComplexVectMatrix &mat, size_t times);
 
   static bool is_unitary(const ComplexVectMatrix &mat);
 };

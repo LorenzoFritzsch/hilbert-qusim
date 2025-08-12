@@ -19,25 +19,6 @@
 #include <initializer_list>
 #include <memory>
 
-#define PERFORMANCE_TESTING 0
-
-#if PERFORMANCE_TESTING
-#include <chrono>
-#include <iostream>
-
-std::string format_with_dots(const unsigned long long number) {
-  std::string num = std::to_string(number);
-  int insertPosition = static_cast<int>(num.length()) - 3;
-
-  while (insertPosition > 0) {
-    num.insert(insertPosition, ".");
-    insertPosition -= 3;
-  }
-
-  return num;
-}
-#endif
-
 bool it_should_compute_conjugate_transpose() {
   // Given
   ComplexMatrix complex_mat = {{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}};

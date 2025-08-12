@@ -49,19 +49,19 @@ public:
 
   [[nodiscard]] std::vector<__complex_precision> imag() const { return imag_; }
 
-  [[nodiscard]] Complex get(const int i) const {
+  [[nodiscard]] Complex get(const size_t i) const {
     return Complex(real_[i], imag_[i]);
   }
 
   [[nodiscard]] std::vector<Complex> get() const {
     std::vector<Complex> result(real_.size());
-    for (int i = 0; i < real_.size(); i++) {
+    for (size_t i = 0; i < real_.size(); i++) {
       result[i] = Complex(real_[i], imag_[i]);
     }
     return result;
   }
 
-  [[nodiscard]] int size() const { return real_.size(); }
+  [[nodiscard]] size_t size() const { return real_.size(); }
 
   void add(const Complex c) {
     real_.emplace_back(c.real());

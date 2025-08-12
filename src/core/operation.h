@@ -17,6 +17,7 @@
 
 #include "complex_vector_split.h"
 #include "complex_vectorised_matrix.h"
+#include <cstddef>
 #include <functional>
 #include <variant>
 
@@ -29,27 +30,28 @@ enum OperationType {
 
 class Operation final {
 public:
-  using op_op = std::function<Complex(
-      const Operation &left, const Operation &right, const int m, const int n)>;
+  using op_op =
+      std::function<Complex(const Operation &left, const Operation &right,
+                            const size_t m, const size_t n)>;
   using op_mat = std::function<Complex(const Operation &left,
                                        const ComplexVectMatrix &right,
-                                       const int m, const int n)>;
-  using mat_op =
-      std::function<Complex(const ComplexVectMatrix &left,
-                            const Operation &right, const int m, const int n)>;
+                                       const size_t m, const size_t n)>;
+  using mat_op = std::function<Complex(const ComplexVectMatrix &left,
+                                       const Operation &right, const size_t m,
+                                       const size_t n)>;
   using mat_mat = std::function<Complex(const ComplexVectMatrix &left,
                                         const ComplexVectMatrix &right,
-                                        const int m, const int n)>;
+                                        const size_t m, const size_t n)>;
 
   using op_op_row = std::function<ComplexVectSplit(
-      const Operation &left, const Operation &right, const int row)>;
+      const Operation &left, const Operation &right, const size_t row)>;
   using op_mat_row = std::function<ComplexVectSplit(
-      const Operation &left, const ComplexVectMatrix &right, const int row)>;
+      const Operation &left, const ComplexVectMatrix &right, const size_t row)>;
   using mat_op_row = std::function<ComplexVectSplit(
-      const ComplexVectMatrix &left, const Operation &right, const int row)>;
+      const ComplexVectMatrix &left, const Operation &right, const size_t row)>;
   using mat_mat_row = std::function<ComplexVectSplit(
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
-      const int row)>;
+      const size_t row)>;
 
   // TODO: Review
   Operation(Operation &&) = default;
@@ -57,44 +59,44 @@ public:
   Operation(const Operation &) = default;
   Operation &operator=(const Operation &) = delete;
 
-  Operation(int left_index, int right_index,
+  Operation(size_t left_index, size_t right_index,
             const std::vector<ComplexVectMatrix> &mat_vect,
             const std::vector<Operation> &op_vect, op_op op, op_op_row op_row,
-            const int final_row_size, const int final_column_size)
+            const size_t final_row_size, const size_t final_column_size)
       : left_index_(left_index), right_index_(right_index),
         op_type_(OperationOperation), mat_vect_(mat_vect), op_vect_(op_vect),
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
 
-  Operation(int left_index, int right_index,
+  Operation(size_t left_index, size_t right_index,
             const std::vector<ComplexVectMatrix> &mat_vect,
             const std::vector<Operation> &op_vect, op_mat op, op_mat_row op_row,
-            const int final_row_size, const int final_column_size)
+            const size_t final_row_size, const size_t final_column_size)
       : left_index_(left_index), right_index_(right_index),
         op_type_(OperationMatrix), mat_vect_(mat_vect), op_vect_(op_vect),
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
 
-  Operation(int left_index, int right_index,
+  Operation(size_t left_index, size_t right_index,
             const std::vector<ComplexVectMatrix> &mat_vect,
             const std::vector<Operation> &op_vect, mat_op op, mat_op_row op_row,
-            const int final_row_size, const int final_column_size)
+            const size_t final_row_size, const size_t final_column_size)
       : left_index_(left_index), right_index_(right_index),
         op_type_(MatrixOperation), mat_vect_(mat_vect), op_vect_(op_vect),
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
 
-  Operation(int left_index, int right_index,
+  Operation(size_t left_index, size_t right_index,
             const std::vector<ComplexVectMatrix> &mat_vect,
             const std::vector<Operation> &op_vect, mat_mat op,
-            mat_mat_row op_row, const int final_row_size,
-            const int final_column_size)
+            mat_mat_row op_row, const size_t final_row_size,
+            const size_t final_column_size)
       : left_index_(left_index), right_index_(right_index),
         op_type_(MatrixMatrix), mat_vect_(mat_vect), op_vect_(op_vect),
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
 
-  [[nodiscard]] Complex get(const int m, const int n) const {
+  [[nodiscard]] Complex get(const size_t m, const size_t n) const {
     switch (op_type_) {
     case OperationOperation: {
       auto op = std::get<op_op>(op_functor_);
@@ -116,7 +118,7 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] ComplexVectSplit get(const int row) const {
+  [[nodiscard]] ComplexVectSplit get(const size_t row) const {
     switch (op_type_) {
     case OperationOperation: {
       auto op = std::get<op_op_row>(op_row_functor_);
@@ -138,9 +140,9 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] int row_size() const { return row_size_; }
+  [[nodiscard]] size_t row_size() const { return row_size_; }
 
-  [[nodiscard]] int column_size() const { return column_size_; }
+  [[nodiscard]] size_t column_size() const { return column_size_; }
 
   [[nodiscard]] OperationType op_type() const { return op_type_; }
 
@@ -156,7 +158,7 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] int left_index() const { return left_index_; }
+  [[nodiscard]] size_t left_index() const { return left_index_; }
 
   [[nodiscard]] std::variant<Operation, ComplexVectMatrix> right() const {
     switch (op_type_) {
@@ -170,7 +172,7 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] int right_index() const { return right_index_; }
+  [[nodiscard]] size_t right_index() const { return right_index_; }
 
   [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_functor() {
     return op_functor_;
@@ -182,8 +184,8 @@ public:
   }
 
 private:
-  const int left_index_;
-  const int right_index_;
+  const size_t left_index_;
+  const size_t right_index_;
   const OperationType op_type_;
 
   const std::vector<ComplexVectMatrix> &mat_vect_;
@@ -192,8 +194,8 @@ private:
   std::variant<op_op, op_mat, mat_op, mat_mat> op_functor_;
   std::variant<op_op_row, op_mat_row, mat_op_row, mat_mat_row> op_row_functor_;
 
-  int row_size_;
-  int column_size_;
+  size_t row_size_;
+  size_t column_size_;
 };
 
 #endif // !OPERATION_H

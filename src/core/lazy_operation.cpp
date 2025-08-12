@@ -18,18 +18,18 @@
 #include <memory>
 #include <thread>
 
-void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
-                           op_op_row op_row,
-                           std::function<int(int, int, int, int)> row_size,
-                           std::function<int(int, int, int, int)> column_size) {
+void LazyOperation::append(
+    const LazyOperation &lazy_op, op_op op, op_op_row op_row,
+    std::function<size_t(size_t, size_t, size_t, size_t)> row_size,
+    std::function<size_t(size_t, size_t, size_t, size_t)> column_size) {
 
   // Add all elements of lazy_op and operations
-  auto sub_op_start_index = static_cast<int>(op_vect_.size());
+  auto sub_op_start_index = op_vect_.size();
   auto lazy_op_operations = lazy_op.op_vect();
-  for (int i = 0; i < lazy_op_operations.size(); i++) {
+  for (size_t i = 0; i < lazy_op_operations.size(); i++) {
     auto operation = lazy_op_operations[i];
     auto op_next = sub_op_start_index + i;
-    auto mat_next = static_cast<int>(mat_vect_.size());
+    auto mat_next = mat_vect_.size();
     switch (operation.op_type()) {
     case OperationMatrix: {
       mat_vect_.push_back(std::get<ComplexVectMatrix>(operation.right()));
@@ -63,8 +63,7 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
   }
 
   // Now, the last op represents the input lazy operation.
-  auto sub_op_end_index =
-      sub_op_start_index + static_cast<int>(lazy_op_operations.size()) - 1;
+  auto sub_op_end_index = sub_op_start_index + lazy_op_operations.size() - 1;
   auto op_row_size = op_vect_.back().row_size();
   auto op_column_size = op_vect_.back().column_size();
   auto lazy_row_size = lazy_op.row_size();
@@ -79,20 +78,19 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
 }
 
 std::unique_ptr<ComplexVectMatrix> LazyOperation::to_matrix() const {
-  const auto num_threads =
-      static_cast<int>(std::thread::hardware_concurrency());
+  const auto num_threads = std::thread::hardware_concurrency();
   const auto rows_per_thread =
       static_cast<int>(std::ceil(static_cast<float>(row_size()) / num_threads));
   auto threads = std::vector<std::thread>(num_threads);
 
   auto result = ComplexVector(row_size() * column_size());
   auto total_rows = row_size();
-  for (int t = 0; t < num_threads; t++) {
-    int start_row = t * rows_per_thread;
-    int end_row = std::min(start_row + rows_per_thread, total_rows);
+  for (size_t t = 0; t < num_threads; t++) {
+    size_t start_row = t * rows_per_thread;
+    size_t end_row = std::min(start_row + rows_per_thread, total_rows);
 
     threads[t] = std::thread([&result, start_row, end_row, total_rows, this] {
-      for (int n = start_row; n < end_row; n++) {
+      for (size_t n = start_row; n < end_row; n++) {
         auto res = get(n).get();
         std::copy(res.begin(), res.end(), result.begin() + (n * total_rows));
       }
