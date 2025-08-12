@@ -18,22 +18,22 @@ project(hilbert)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
-include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/core ${PROJECT_SOURCE_DIR}/src/engine)
+include_directories(${PROJECT_SOURCE_DIR}/lib)
 
 add_library(hilbert STATIC
-        src/hilbert_namespace.h
-        src/engine/algebra_engine.cpp
-        src/engine/algebra_engine.h
-        src/engine/gate_engine.cpp
-        src/engine/gate_engine.h
-        src/engine/circuit_engine.h
-        src/engine/circuit_engine.cpp
-        src/core/qubit.h
-        src/core/lazy_operation.h
-        src/core/lazy_operation.cpp
-        src/core/complex_vectorised_matrix.h
-        src/core/operation.h
-        src/core/complex_vector_split.h)
+        lib/hilbert_namespace.h
+        lib/algebra_engine.cpp
+        lib/algebra_engine.h
+        lib/gate_engine.cpp
+        lib/gate_engine.h
+        lib/circuit_engine.h
+        lib/circuit_engine.cpp
+        lib/qubit.h
+        lib/lazy_operation.h
+        lib/lazy_operation.cpp
+        lib/complex_vectorised_matrix.h
+        lib/operation.h
+        lib/complex_vector_split.h)
 
 if(APPLE)
   message(STATUS "Configuring to run with Apple Accelerate")
