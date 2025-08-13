@@ -12,20 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CIRCUIT_ENGINE_H
-#define CIRCUIT_ENGINE_H
+#ifndef STATE_VECTOR_H
+#define STATE_VECTOR_H
 
-#include "state_vector.h"
-#include <memory.h>
-#include <memory>
+#include "qubit.h"
+#include <cstddef>
+#include <vector>
 
-class CircuitEngine {
+class StateVector {
 public:
-  CircuitEngine() = delete;
+  explicit StateVector(const std::vector<Qubit> state_vector)
+      : state_vector_(state_vector) {}
 
-  static std::unique_ptr<StateVector> qft(const StateVector &j);
+  bool operator==(const StateVector &other) const {
+    return state_vector_ == other.state_vector_;
+  }
 
-  static std::unique_ptr<StateVector> inverse_qft(const StateVector &k);
+  Qubit get(size_t i) const { return state_vector_.at(i); }
+
+  std::vector<Qubit> get() const { return state_vector_; }
+
+  size_t size() const { return state_vector_.size(); }
+
+private:
+  const std::vector<Qubit> state_vector_;
 };
 
-#endif // !CIRCUIT_ENGINE_H
+#endif // !STATE_VECTOR_H

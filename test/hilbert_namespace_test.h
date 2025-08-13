@@ -18,7 +18,6 @@
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
-#include "qubit.h"
 #include <cstddef>
 #include <iostream>
 
@@ -27,34 +26,31 @@
 #if PERFORMANCE_TESTING
 #include <chrono>
 
-std::string format_with_dots(const unsigned long long number) {
-  std::string num = std::to_string(number);
-  int insertPosition = static_cast<int>(num.length()) - 3;
+class PerfTest {
+public:
+  explicit PerfTest(const std::string title)
+      : title_(title), start_(std::chrono::high_resolution_clock::now()) {}
 
-  while (insertPosition > 0) {
-    num.insert(insertPosition, ".");
-    insertPosition -= 3;
+  ~PerfTest() {
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start_);
+    const auto duration_seconds = duration.count();
+    std::cout << std::endl
+              << "** Elapsed time " << title_ << ": " << duration_seconds
+              << " microseconds";
   }
 
-  return num;
+private:
+  const std::string title_;
+  const std::chrono::high_resolution_clock::time_point start_;
+};
+
+inline void print_info(const std::string info) {
+  std::cout << std::endl << "- " << info;
 }
+
 #endif
-
-inline bool are_matrices_equal(const ComplexVectMatrix &left,
-                               const ComplexVectMatrix &right) {
-  if (left.row_size() != right.row_size() ||
-      left.column_size() != right.column_size()) {
-    return false;
-  }
-  for (size_t i = 0; i < left.row_size(); i++) {
-    for (size_t j = 0; j < left.column_size(); j++) {
-      if (left.get(i, j) != right.get(i, j)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
 
 inline bool are_matrices_equal(const ComplexVectMatrix &left,
                                const LazyOperation &right) {
@@ -67,19 +63,6 @@ inline bool are_matrices_equal(const ComplexVectMatrix &left,
       if (left.get(i, j) != right.get(i, j)) {
         return false;
       }
-    }
-  }
-  return true;
-}
-
-inline bool are_states_equal(const std::vector<Qubit> &left,
-                             const std::vector<Qubit> &right) {
-  if (left.size() != right.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < left.size(); i++) {
-    if (left[i] != right[i]) {
-      return false;
     }
   }
   return true;
@@ -105,20 +88,6 @@ inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
     }
   }
   return true;
-}
-
-inline void print_states(const std::vector<Qubit> &state,
-                         const std::vector<Qubit> &result) {
-  for (size_t i = 0; i < state.size(); i++) {
-    auto left = state[i].to_vector();
-    auto right = result[i].to_vector();
-    std::cout << "(" << left->get(0, 0).real() << ", " << left->get(0, 0).imag()
-              << ")|0> + (" << left->get(0, 1).real() << ", "
-              << left->get(0, 1).imag() << ")|1> => ("
-              << right->get(0, 0).real() << ", " << right->get(0, 0).imag()
-              << ")|0> + (" << right->get(0, 1).real() << ", "
-              << right->get(0, 1).imag() << ")|1>" << std::endl;
-  }
 }
 
 inline void run_test(const std::string &title, std::function<bool()> test,

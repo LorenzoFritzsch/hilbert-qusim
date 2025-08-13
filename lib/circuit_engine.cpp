@@ -14,28 +14,29 @@
 
 #include "circuit_engine.h"
 #include "gate_engine.h"
+#include "state_vector.h"
 #include <memory>
 
-std::vector<Qubit> CircuitEngine::qft(const std::vector<Qubit> j) {
+std::unique_ptr<StateVector> CircuitEngine::qft(const StateVector &j) {
   std::vector<Qubit> result(j.size());
 
   auto last_index = result.size() - 1;
   for (size_t i = 0; i < j.size(); i++) {
-    auto j_k = GateEngine::hadamard(j[i]);
+    auto j_k = GateEngine::hadamard(j.get(i));
     for (size_t k_next = i + 1; k_next < j.size(); k_next++) {
-      j_k = GateEngine::controlled_u(*j_k, j[k_next],
+      j_k = GateEngine::controlled_u(*j_k, j.get(k_next),
                                      *GateEngine::r_k(k_next + 1));
     }
     result[last_index - i] = *j_k;
   }
 
-  return result;
+  return std::make_unique<StateVector>(result);
 }
 
-std::vector<Qubit> CircuitEngine::inverse_qft(const std::vector<Qubit> k) {
+std::unique_ptr<StateVector> CircuitEngine::inverse_qft(const StateVector &k) {
   std::vector<Qubit> result(k.size());
 
-  auto swapped(k);
+  auto swapped(k.get());
   std::reverse(swapped.begin(), swapped.end());
 
   auto last_index = swapped.size() - 1;
@@ -48,5 +49,5 @@ std::vector<Qubit> CircuitEngine::inverse_qft(const std::vector<Qubit> k) {
     result[i] = *GateEngine::hadamard(k_i);
   }
 
-  return result;
+  return std::make_unique<StateVector>(result);
 }

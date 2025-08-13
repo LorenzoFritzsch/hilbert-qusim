@@ -157,37 +157,27 @@ bool it_should_compute_matrix_power() {
 
   // When
 #if PERFORMANCE_TESTING
-  const auto start_lazy = std::chrono::high_resolution_clock::now();
+  auto perf_test_setup =
+      new PerfTest(std::to_string(times) + " lazy tensor products");
 #endif
 
   const auto result = AlgebraEngine::tensor_product(*a, times);
 
 #if PERFORMANCE_TESTING
-  const auto end_lazy = std::chrono::high_resolution_clock::now();
-  const auto duration_lazy =
-      std::chrono::duration_cast<std::chrono::microseconds>(end_lazy -
-                                                            start_lazy);
-  std::cout << "** Elapsed time " << times
-            << " lazy tensor products: " << duration_lazy.count() << " micros"
-            << std::endl;
+  delete perf_test_setup;
 #endif
 
   // Then
 #if PERFORMANCE_TESTING
-  const auto start = std::chrono::high_resolution_clock::now();
+  const auto perf_test_materialisation = new PerfTest("materialisation");
 #endif
   const auto actual = result->to_matrix();
 #if PERFORMANCE_TESTING
-  const auto end = std::chrono::high_resolution_clock::now();
-  const auto duration =
-      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  std::cout << " - Elapsed time materialisation: "
-            << format_with_dots(duration.count()) << " millis" << std::endl;
-  std::cout << " - Final matrix: " << actual->row_size() << "x"
-            << actual->column_size() << std::endl;
-  std::cout << " - Total elements: "
-            << format_with_dots(actual->row_size() * actual->column_size())
-            << std::endl;
+  delete perf_test_materialisation;
+  print_info("Final matrix: " + std::to_string(actual->row_size()) + "x" +
+             std::to_string(actual->column_size()));
+  print_info("Total elements: " +
+             std::to_string(actual->row_size() * actual->column_size()));
 #endif
   return verify_identity_matrix(*actual, std::pow(2, times));
 }
@@ -198,18 +188,13 @@ bool it_should_verify_unitarity() {
 
   // When
 #if PERFORMANCE_TESTING
-  const auto start = std::chrono::high_resolution_clock::now();
+  const auto perf_test = new PerfTest("unitarity check");
 #endif
 
   const auto result = AlgebraEngine::is_unitary(*a);
 
 #if PERFORMANCE_TESTING
-  const auto end = std::chrono::high_resolution_clock::now();
-  const auto duration =
-      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-  std::cout << "** Elapsed time unitarity check: "
-            << format_with_dots(duration.count()) << " microseconds"
-            << std::endl;
+  delete perf_test;
 #endif
 
   // Then

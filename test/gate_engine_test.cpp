@@ -41,7 +41,7 @@ bool it_should_apply_controlled_gate() {
 
   // Then
   const auto expected = ket_1;
-  return are_matrices_equal(ComplexVectMatrix(ket_1), *result->to_vector());
+  return ComplexVectMatrix(ket_1) == *result->to_vector();
 }
 
 bool it_should_apply_hadamard() {
@@ -54,7 +54,7 @@ bool it_should_apply_hadamard() {
   // Then
   auto alpha_beta_exp = 1 / std::sqrt(2);
   const auto expected = std::make_unique<Qubit>(alpha_beta_exp, alpha_beta_exp);
-  return are_matrices_equal(*expected->to_vector(), *result->to_vector());
+  return *expected->to_vector() == *result->to_vector();
 }
 
 int main() {

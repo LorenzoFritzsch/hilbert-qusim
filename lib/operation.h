@@ -53,7 +53,7 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
-  // TODO: Review
+  // An `Operation` can be moved but not copied.
   Operation(Operation &&) = default;
   Operation &operator=(Operation &&) = delete;
   Operation(const Operation &) = default;
