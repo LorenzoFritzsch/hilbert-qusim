@@ -33,13 +33,16 @@ add_library(hilbert STATIC
         lib/lazy_operation.cpp
         lib/complex_vectorised_matrix.h
         lib/operation.h
-        lib/complex_vector_split.h)
+        lib/complex_vector_split.h
+        lib/simd.h
+        lib/state_vector.h)
 
 if(APPLE)
   message(STATUS "Configuring to run with Apple Accelerate")
   target_link_libraries(hilbert PUBLIC "$<LINK_LIBRARY:FRAMEWORK,Accelerate>")
 else()
   message(STATUS "Configuring to run with AVX/AVX2 extensions")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Compiling with Clang/GCC")
     target_compile_options(hilbert PRIVATE -mavx2 -mfma)

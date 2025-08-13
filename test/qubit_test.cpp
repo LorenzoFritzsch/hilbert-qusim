@@ -28,7 +28,7 @@ bool it_should_create_qubit() {
   const auto qubit = std::make_unique<Qubit>(alpha, beta);
 
   // Then
-  return are_matrices_equal(ComplexVectMatrix(ket_0), *qubit->to_vector());
+  return ComplexVectMatrix(ket_0) == *qubit->to_vector();
 }
 
 bool it_should_not_create_qubit_with_invalid_alpha_beta() {
@@ -53,7 +53,7 @@ bool it_should_create_qubit_cvm() {
   const auto qubit = std::make_unique<Qubit>(*qubit_vect);
 
   // Then
-  return are_matrices_equal(ComplexVectMatrix(ket_0), *qubit->to_vector());
+  return ComplexVectMatrix(ket_0) == *qubit->to_vector();
 }
 
 bool it_should_not_create_qubit_invalid_cvm() {

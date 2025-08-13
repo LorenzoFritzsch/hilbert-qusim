@@ -17,6 +17,7 @@
 
 #include "complex_vector_split.h"
 #include "hilbert_namespace.h"
+#include "simd.h"
 #include <cstddef>
 #include <functional>
 
@@ -52,6 +53,19 @@ public:
 
   ComplexVectMatrix()
       : row_size_(0), column_size_(0), vectorised_matrix_(ComplexVector(0)) {}
+
+  bool operator==(const ComplexVectMatrix &other) const {
+    if (row_size_ != other.row_size_ || column_size_ != other.column_size_) {
+      return false;
+    }
+
+    auto diff = simd::cvsub(ComplexVectSplit(vectorised_matrix_),
+                            ComplexVectSplit(other.vectorised_matrix_));
+    if (!approx_equal(simd::cvsve(diff), Complex(0, 0))) {
+      return false;
+    }
+    return true;
+  }
 
   [[nodiscard]] Complex get(const size_t m, const size_t n) const {
     return vectorised_matrix_.at(m * column_size_ + n);

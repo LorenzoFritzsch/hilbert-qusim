@@ -15,6 +15,7 @@
 #include "circuit_engine.h"
 #include "hilbert_namespace_test.h"
 #include "qubit.h"
+#include "state_vector.h"
 #include <cmath>
 #include <vector>
 
@@ -22,8 +23,8 @@ bool it_should_compute_qft() {
   // Given
   auto ket_0_q = Qubit(1, 0);
   auto ket_1_q = Qubit(0, 1);
-  auto state_1 = std::vector<Qubit>({ket_0_q, ket_0_q});
-  auto state_2 = std::vector<Qubit>({ket_0_q, ket_1_q});
+  auto state_1 = StateVector({ket_0_q, ket_0_q});
+  auto state_2 = StateVector({ket_0_q, ket_1_q});
 
   // When
   auto result_1 = CircuitEngine::qft(state_1);
@@ -31,13 +32,13 @@ bool it_should_compute_qft() {
 
   // Then
   auto ket_a_1 = Qubit(1 / std::sqrt(2), 1 / std::sqrt(2));
-  auto expected_1 = std::vector<Qubit>({ket_a_1, ket_a_1});
-  bool case_1_ok = are_states_equal(expected_1, result_1);
+  auto expected_1 = StateVector({ket_a_1, ket_a_1});
+  bool case_1_ok = expected_1 == *result_1;
 
   auto ket_a_2 = Qubit(1 / std::sqrt(2), -1 / std::sqrt(2));
   auto ket_b_2 = Qubit(1 / std::sqrt(2), Complex(0, 1 / std::sqrt(2)));
-  auto expected_2 = std::vector<Qubit>({ket_a_2, ket_b_2});
-  bool case_2_ok = are_states_equal(expected_2, result_2);
+  auto expected_2 = StateVector({ket_a_2, ket_b_2});
+  bool case_2_ok = expected_2 == *result_2;
 
   return case_1_ok && case_2_ok;
 }
@@ -46,15 +47,14 @@ bool it_should_compute_qft_and_inverse() {
   // Given
   auto ket_0_q = Qubit(1, 0);
   auto ket_1_q = Qubit(0, 1);
-  auto state =
-      std::vector<Qubit>({ket_0_q, ket_1_q, ket_0_q, ket_0_q, ket_1_q});
+  auto state = StateVector({ket_0_q, ket_1_q, ket_0_q, ket_0_q, ket_1_q});
 
   // When
   auto state_qft = CircuitEngine::qft(state);
-  auto state_iqft = CircuitEngine::inverse_qft(state_qft);
+  auto state_iqft = CircuitEngine::inverse_qft(*state_qft);
 
   // Then
-  return are_states_equal(state, state_iqft);
+  return state == *state_iqft;
 }
 
 int main() {
