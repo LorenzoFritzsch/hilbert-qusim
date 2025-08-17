@@ -1,5 +1,6 @@
 build/
 build-debug/
+build-perf/
 cmake-build-debug/
 .cache/
 

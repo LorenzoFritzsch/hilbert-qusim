@@ -156,29 +156,20 @@ bool it_should_compute_matrix_power() {
   constexpr auto times = 8;
 
   // When
-#if PERFORMANCE_TESTING
   auto perf_test_setup =
-      new PerfTest(std::to_string(times) + " lazy tensor products");
-#endif
-
+      pt_start(std::to_string(times) + " lazy tensor products");
   const auto result = AlgebraEngine::tensor_product(*a, times);
-
-#if PERFORMANCE_TESTING
-  delete perf_test_setup;
-#endif
+  pt_stop(perf_test_setup);
 
   // Then
-#if PERFORMANCE_TESTING
-  const auto perf_test_materialisation = new PerfTest("materialisation");
-#endif
+  const auto perf_test_materialisation = pt_start("materialisation");
   const auto actual = result->to_matrix();
-#if PERFORMANCE_TESTING
-  delete perf_test_materialisation;
+  pt_stop(perf_test_materialisation);
   print_info("Final matrix: " + std::to_string(actual->row_size()) + "x" +
              std::to_string(actual->column_size()));
   print_info("Total elements: " +
              std::to_string(actual->row_size() * actual->column_size()));
-#endif
+
   return verify_identity_matrix(*actual, std::pow(2, times));
 }
 
@@ -187,15 +178,9 @@ bool it_should_verify_unitarity() {
   auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(hadamard_2x2));
 
   // When
-#if PERFORMANCE_TESTING
-  const auto perf_test = new PerfTest("unitarity check");
-#endif
-
+  auto perf_test = pt_start("unitarity check");
   const auto result = AlgebraEngine::is_unitary(*a);
-
-#if PERFORMANCE_TESTING
-  delete perf_test;
-#endif
+  pt_stop(perf_test);
 
   // Then
   return result;
@@ -205,36 +190,34 @@ int main() {
   int total = 0;
   int failed = 0;
 
-#if !PERFORMANCE_TESTING
   run_test("it_should_compute_conjugate_transpose",
-           it_should_compute_conjugate_transpose, failed, total);
+           it_should_compute_conjugate_transpose, failed, total, true);
 
   run_test("it_should_compute_inner_product", it_should_compute_inner_product,
-           failed, total);
+           failed, total, true);
 
   run_test("it_should_compute_tensor_product", it_should_compute_tensor_product,
-           failed, total);
+           failed, total, true);
 
   run_test("it_should_compute_scalar_product", it_should_compute_scalar_product,
-           failed, total);
+           failed, total, true);
 
   run_test("it_should_compute_scalar_vector_product",
-           it_should_compute_scalar_vector_product, failed, total);
+           it_should_compute_scalar_vector_product, failed, total, true);
 
-  run_test("it_should_compute_sum", it_should_compute_sum, failed, total);
+  run_test("it_should_compute_sum", it_should_compute_sum, failed, total, true);
 
   run_test("it_should_compute_outer_product", it_should_compute_outer_product,
-           failed, total);
+           failed, total, true);
 
   run_test("it_should_compute_matrix_vector_product",
-           it_should_compute_matrix_vector_product, failed, total);
+           it_should_compute_matrix_vector_product, failed, total, true);
 
-#endif
   run_test("it_should_verify_unitarity", it_should_verify_unitarity, failed,
-           total);
+           total, false);
 
   run_test("it_should_compute_matrix_power", it_should_compute_matrix_power,
-           failed, total);
+           failed, total, false);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

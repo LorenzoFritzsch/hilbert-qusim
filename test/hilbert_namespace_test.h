@@ -21,10 +21,15 @@
 #include <cstddef>
 #include <iostream>
 
-#define PERFORMANCE_TESTING 0
-
-#if PERFORMANCE_TESTING
 #include <chrono>
+
+/*
+ * Formats a delta from microseconds to seconds.
+ */
+inline std::string mussec(unsigned long long delta_mus) {
+  double delta_sec = static_cast<double>(delta_mus) / 1000000;
+  return std::to_string(delta_sec);
+}
 
 class PerfTest {
 public:
@@ -35,10 +40,10 @@ public:
     const auto end = std::chrono::high_resolution_clock::now();
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start_);
-    const auto duration_seconds = duration.count();
+    const auto duration_seconds = mussec(duration.count());
     std::cout << std::endl
-              << "** Elapsed time " << title_ << ": " << duration_seconds
-              << " microseconds";
+              << "** Elapsed time " << title_ << ": \033[1m" << duration_seconds
+              << " seconds\033[0m";
   }
 
 private:
@@ -47,10 +52,24 @@ private:
 };
 
 inline void print_info(const std::string info) {
-  std::cout << std::endl << "- " << info;
+#ifdef PERFORMANCE_TESTING
+  std::cout << std::endl << "-> " << info;
+#endif
 }
 
+inline PerfTest *pt_start(const std::string title) {
+#ifdef PERFORMANCE_TESTING
+  return new PerfTest(title);
+#else
+  return nullptr;
 #endif
+}
+
+inline void pt_stop(PerfTest *pt) {
+  if (pt != nullptr) {
+    delete pt;
+  }
+}
 
 inline bool are_matrices_equal(const ComplexVectMatrix &left,
                                const LazyOperation &right) {
@@ -95,6 +114,9 @@ inline void run_test(const std::string &title, std::function<bool()> test,
   std::cout << title << std::string(60 - title.length(), '.');
   try {
     auto result = test();
+#ifdef PERFORMANCE_TESTING
+    std::cout << std::endl << std::string(60, '.');
+#endif
     if (result) {
       std::cout << "\033[32m PASSED\033[0m";
     } else {
@@ -106,6 +128,17 @@ inline void run_test(const std::string &title, std::function<bool()> test,
     std::cout << "\033[31m FAILED: " << e.what() << "\033[0m" << std::endl;
   }
   total += 1;
+}
+
+inline void run_test(const std::string &title, std::function<bool()> test,
+                     int &failed, int &total,
+                     const bool skip_when_perf_testing) {
+#ifdef PERFORMANCE_TESTING
+  if (skip_when_perf_testing) {
+    return;
+  }
+#endif
+  run_test(title, test, failed, total);
 }
 
 inline void test_resumen(const int &failed, const int &total) {
