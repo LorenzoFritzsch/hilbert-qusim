@@ -91,8 +91,8 @@ std::unique_ptr<ComplexVectMatrix> LazyOperation::to_matrix() const {
 
     threads[t] = std::thread([&result, start_row, end_row, total_rows, this] {
       for (size_t n = start_row; n < end_row; n++) {
-        auto res = get(n).get();
-        std::copy(res.begin(), res.end(), result.begin() + (n * total_rows));
+        auto res = get(n)->get();
+        std::copy(res->begin(), res->end(), result.begin() + (n * total_rows));
       }
     });
   }

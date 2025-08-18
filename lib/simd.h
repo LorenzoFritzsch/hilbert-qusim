@@ -16,6 +16,8 @@
 #define SIMD_H
 
 #include "complex_vector_split.h"
+#include <memory.h>
+
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #else
@@ -28,8 +30,8 @@ public:
   /*
    * SIMD element-wise complex vector multiplication
    */
-  static ComplexVectSplit cvmul(const ComplexVectSplit &left,
-                                const ComplexVectSplit &right) {
+  static std::unique_ptr<ComplexVectSplit>
+  cvmul(const ComplexVectSplit &left, const ComplexVectSplit &right) {
 
     // Considering the formula (a + bi)(c + di) = (ac - bd) + i(ad + bc):
     std::vector<__complex_precision> ac_vect(left.size()), bd_vect(left.size()),
@@ -38,10 +40,10 @@ public:
     std::vector<__complex_precision> result_real(left.size());
     std::vector<__complex_precision> result_imag(left.size());
 
-    auto left_real = left.real();
-    auto left_imag = left.imag();
-    auto right_real = right.real();
-    auto right_imag = right.imag();
+    auto left_real = *left.real();
+    auto left_imag = *left.imag();
+    auto right_real = *right.real();
+    auto right_imag = *right.imag();
 
 #ifdef __APPLE__
     vDSP_vmul(left_real.data(), 1, right_real.data(), 1, ac_vect.data(), 1,
@@ -73,7 +75,7 @@ public:
              result_imag.size());
 #endif
 
-    return ComplexVectSplit(result_real, result_imag);
+    return std::make_unique<ComplexVectSplit>(result_real, result_imag);
   }
 
   /*
@@ -85,11 +87,11 @@ public:
     auto vect_size = vect.size();
 
 #ifdef __APPLE__
-    vDSP_sve(vect.real().data(), 1, &result_real, vect_size);
-    vDSP_sve(vect.imag().data(), 1, &result_imag, vect_size);
+    vDSP_sve(vect.real()->data(), 1, &result_real, vect_size);
+    vDSP_sve(vect.imag()->data(), 1, &result_imag, vect_size);
 #else
-    result_real = hsum_avx(vect.real().data(), vect_size);
-    result_imag = hsum_avx(vect.imag().data(), vect_size);
+    result_real = hsum_avx(vect.real()->data(), vect_size);
+    result_imag = hsum_avx(vect.imag()->data(), vect_size);
 #endif
 
     return Complex(result_real, result_imag);
@@ -98,56 +100,56 @@ public:
   /*
    * SIMD element-wise sum of two vectors.
    */
-  static ComplexVectSplit cvadd(const ComplexVectSplit &left,
-                                const ComplexVectSplit &right) {
+  static std::unique_ptr<ComplexVectSplit>
+  cvadd(const ComplexVectSplit &left, const ComplexVectSplit &right) {
     std::vector<__complex_precision> result_real(left.size()),
         result_imag(left.size());
 
 #ifdef __APPLE__
-    vDSP_vadd(left.real().data(), 1, right.real().data(), 1, result_real.data(),
-              1, result_real.size());
-    vDSP_vadd(left.imag().data(), 1, right.imag().data(), 1, result_imag.data(),
-              1, result_imag.size());
+    vDSP_vadd(left.real()->data(), 1, right.real()->data(), 1,
+              result_real.data(), 1, result_real.size());
+    vDSP_vadd(left.imag()->data(), 1, right.imag()->data(), 1,
+              result_imag.data(), 1, result_imag.size());
 #else
-    vadd_avx(left.real().data(), right.real().data(), result_real.data(),
+    vadd_avx(left.real()->data(), right.real()->data(), result_real.data(),
              result_real.size());
-    vadd_avx(left.imag().data(), right.imag().data(), result_imag.data(),
+    vadd_avx(left.imag()->data(), right.imag()->data(), result_imag.data(),
              result_imag.size());
 #endif
 
-    return ComplexVectSplit(result_real, result_imag);
+    return std::make_unique<ComplexVectSplit>(result_real, result_imag);
   }
 
   /*
    * SIMD element-wise subtraction of two vectors.
    */
-  static ComplexVectSplit cvsub(const ComplexVectSplit &left,
-                                const ComplexVectSplit &right) {
+  static std::unique_ptr<ComplexVectSplit>
+  cvsub(const ComplexVectSplit &left, const ComplexVectSplit &right) {
     std::vector<__complex_precision> result_real(left.size()),
         result_imag(right.size());
 
 #ifdef __APPLE__
-    vDSP_vsub(right.real().data(), 1, left.real().data(), 1, result_real.data(),
-              1, result_real.size());
-    vDSP_vsub(right.imag().data(), 1, left.imag().data(), 1, result_imag.data(),
-              1, result_imag.size());
+    vDSP_vsub(right.real()->data(), 1, left.real()->data(), 1,
+              result_real.data(), 1, result_real.size());
+    vDSP_vsub(right.imag()->data(), 1, left.imag()->data(), 1,
+              result_imag.data(), 1, result_imag.size());
 #else
-    vsub_avx(left.real().data(), right.real().data(), result_real.data(),
+    vsub_avx(left.real()->data(), right.real()->data(), result_real.data(),
              result_real.size());
-    vsub_avx(left.imag().data(), right.imag().data(), result_imag.data(),
+    vsub_avx(left.imag()->data(), right.imag()->data(), result_imag.data(),
              result_imag.size());
 #endif
 
-    return ComplexVectSplit(result_real, result_imag);
+    return std::make_unique<ComplexVectSplit>(result_real, result_imag);
   }
 
   /*
    * SIMD scalar product.
    */
-  static ComplexVectSplit cvsmul(const ComplexVectSplit &vect,
-                                 const Complex &k) {
-    auto vect_real = vect.real();
-    auto vect_imag = vect.imag();
+  static std::unique_ptr<ComplexVectSplit> cvsmul(const ComplexVectSplit &vect,
+                                                  const Complex &k) {
+    auto vect_real = *vect.real();
+    auto vect_imag = *vect.imag();
     auto k_real = static_cast<__complex_precision>(k.real());
     auto k_imag = static_cast<__complex_precision>(k.imag());
 
@@ -180,7 +182,7 @@ public:
              result_imag.size());
 #endif
 
-    return ComplexVectSplit(result_real, result_imag);
+    return std::make_unique<ComplexVectSplit>(result_real, result_imag);
   }
 #ifndef __APPLE__
 private:

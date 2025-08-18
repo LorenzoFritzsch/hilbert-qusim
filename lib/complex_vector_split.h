@@ -16,6 +16,7 @@
 #define COMPLEX_VECTOR_SPLIT_H
 
 #include "hilbert_namespace.h"
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -30,7 +31,7 @@ class ComplexVectSplit {
 public:
   ComplexVectSplit() = default;
 
-  inline ComplexVectSplit(const std::vector<Complex> v) {
+  explicit ComplexVectSplit(const std::vector<Complex> v) {
     for (auto k : v) {
       real_.push_back(k.real());
       imag_.push_back(k.imag());
@@ -45,20 +46,24 @@ public:
     }
   }
 
-  [[nodiscard]] std::vector<__complex_precision> real() const { return real_; }
+  [[nodiscard]] std::unique_ptr<std::vector<__complex_precision>> real() const {
+    return std::make_unique<std::vector<__complex_precision>>(real_);
+  }
 
-  [[nodiscard]] std::vector<__complex_precision> imag() const { return imag_; }
+  [[nodiscard]] std::unique_ptr<std::vector<__complex_precision>> imag() const {
+    return std::make_unique<std::vector<__complex_precision>>(imag_);
+  }
 
   [[nodiscard]] Complex get(const size_t i) const {
     return Complex(real_[i], imag_[i]);
   }
 
-  [[nodiscard]] std::vector<Complex> get() const {
+  [[nodiscard]] std::unique_ptr<std::vector<Complex>> get() const {
     std::vector<Complex> result(real_.size());
     for (size_t i = 0; i < real_.size(); i++) {
       result[i] = Complex(real_[i], imag_[i]);
     }
-    return result;
+    return std::make_unique<std::vector<Complex>>(result);
   }
 
   [[nodiscard]] size_t size() const { return real_.size(); }
@@ -68,7 +73,7 @@ public:
     imag_.emplace_back(c.imag());
   }
 
-  ComplexVectSplit conj() {
+  std::unique_ptr<ComplexVectSplit> conj() {
     __complex_precision k = -1;
     std::vector<__complex_precision> imag_conj(imag_.size());
 
@@ -91,7 +96,7 @@ public:
       imag_conj[i] = src[i] * k;
     }
 #endif
-    return ComplexVectSplit(real_, imag_conj);
+    return std::make_unique<ComplexVectSplit>(real_, imag_conj);
   }
 
 private:

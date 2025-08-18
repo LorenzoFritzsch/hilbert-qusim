@@ -16,15 +16,15 @@
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
-#include <initializer_list>
 #include <memory>
 
 bool it_should_compute_conjugate_transpose() {
   // Given
-  ComplexMatrix complex_mat = {{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}};
+  auto complex_mat = std::make_unique<ComplexVectMatrix>(
+      ComplexMatrix({{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}}));
 
   // When
-  auto result = AlgebraEngine::conjugate_transpose(complex_mat);
+  auto result = AlgebraEngine::conjugate_transpose(*complex_mat);
 
   // Then
   ComplexMatrix expected = {{{1, -1}, {2, -1}}, {{1, -2}, {2, -2}}};

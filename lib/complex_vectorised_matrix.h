@@ -20,10 +20,11 @@
 #include "simd.h"
 #include <cstddef>
 #include <functional>
+#include <memory>
 
 class ComplexVectMatrix final {
 public:
-  ComplexVectMatrix(const ComplexMatrix &m)
+  explicit ComplexVectMatrix(const ComplexMatrix &m)
       : row_size_(m.size()), column_size_(m.front().size()),
         vectorised_matrix_(ComplexVector(row_size_ * column_size_)) {
     const auto elements_size = row_size_ * column_size_;
@@ -37,7 +38,7 @@ public:
       : row_size_(row_size), column_size_(column_size),
         vectorised_matrix_(std::move(m)) {}
 
-  ComplexVectMatrix(const ComplexVector &v)
+  explicit ComplexVectMatrix(const ComplexVector &v)
       : row_size_(1), column_size_(v.size()),
         vectorised_matrix_(ComplexVector(row_size_ * column_size_)) {
     const auto elements_size = row_size_ * column_size_;
@@ -46,7 +47,7 @@ public:
     }
   }
 
-  ComplexVectMatrix(const Complex &c)
+  explicit ComplexVectMatrix(const Complex &c)
       : row_size_(1), column_size_(1), vectorised_matrix_(ComplexVector(1)) {
     vectorised_matrix_[0] = c;
   }
@@ -61,7 +62,7 @@ public:
 
     auto diff = simd::cvsub(ComplexVectSplit(vectorised_matrix_),
                             ComplexVectSplit(other.vectorised_matrix_));
-    if (!approx_equal(simd::cvsve(diff), Complex(0, 0))) {
+    if (!approx_equal(simd::cvsve(*diff), Complex(0, 0))) {
       return false;
     }
     return true;
@@ -71,7 +72,7 @@ public:
     return vectorised_matrix_.at(m * column_size_ + n);
   }
 
-  [[nodiscard]] ComplexVectSplit
+  [[nodiscard]] std::unique_ptr<ComplexVectSplit>
   get(size_t row_size, std::function<size_t(size_t i)> m_functor,
       std::function<size_t(size_t i)> n_functor) const {
     ComplexVectSplit result;
@@ -81,30 +82,33 @@ public:
       auto index = m * column_size_ + n;
       result.add(vectorised_matrix_.at(index));
     }
-    return result;
+    return std::make_unique<ComplexVectSplit>(result);
   }
 
-  [[nodiscard]] ComplexVectSplit get_row(const size_t row) const {
+  [[nodiscard]] std::unique_ptr<ComplexVectSplit>
+  get_row(const size_t row) const {
     auto start_index = row * column_size_;
     auto end_index = start_index + column_size_;
-    return std::vector<Complex>(vectorised_matrix_.begin() + start_index,
-                                vectorised_matrix_.begin() + end_index);
+    return std::make_unique<ComplexVectSplit>(
+        std::vector<Complex>(vectorised_matrix_.begin() + start_index,
+                             vectorised_matrix_.begin() + end_index));
   }
 
-  [[nodiscard]] ComplexVectSplit get_column(const size_t column) const {
+  [[nodiscard]] std::unique_ptr<ComplexVectSplit>
+  get_column(const size_t column) const {
     ComplexVectSplit result;
     for (size_t i = column; i < column_size_; i += column_size_) {
       result.add(vectorised_matrix_[i]);
     }
-    return result;
+    return std::make_unique<ComplexVectSplit>(result);
   }
 
-  [[nodiscard]] ComplexVectSplit split() const {
+  [[nodiscard]] std::unique_ptr<ComplexVectSplit> split() const {
     ComplexVectSplit result;
     for (auto k : vectorised_matrix_) {
       result.add(k);
     }
-    return result;
+    return std::make_unique<ComplexVectSplit>(result);
   }
 
   [[nodiscard]] size_t row_size() const { return row_size_; }

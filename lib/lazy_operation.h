@@ -38,13 +38,13 @@ public:
                                         const ComplexVectMatrix &right,
                                         const size_t m, const size_t n)>;
 
-  using op_op_row = std::function<ComplexVectSplit(
+  using op_op_row = std::function<std::unique_ptr<ComplexVectSplit>(
       const Operation &left, const Operation &right, const size_t row)>;
-  using op_mat_row = std::function<ComplexVectSplit(
+  using op_mat_row = std::function<std::unique_ptr<ComplexVectSplit>(
       const Operation &left, const ComplexVectMatrix &right, const size_t row)>;
-  using mat_op_row = std::function<ComplexVectSplit(
+  using mat_op_row = std::function<std::unique_ptr<ComplexVectSplit>(
       const ComplexVectMatrix &left, const Operation &right, const size_t row)>;
-  using mat_mat_row = std::function<ComplexVectSplit(
+  using mat_mat_row = std::function<std::unique_ptr<ComplexVectSplit>(
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
@@ -112,7 +112,7 @@ public:
     return op_vect_.back().get(m, n);
   }
 
-  [[nodiscard]] ComplexVectSplit get(const size_t row) const {
+  [[nodiscard]] std::unique_ptr<ComplexVectSplit> get(const size_t row) const {
     return op_vect_.back().get(row);
   }
 
