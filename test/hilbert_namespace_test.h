@@ -73,18 +73,7 @@ inline void pt_stop(PerfTest *pt) {
 
 inline bool are_matrices_equal(const ComplexVectMatrix &left,
                                const LazyOperation &right) {
-  if (left.row_size() != right.row_size() ||
-      left.column_size() != right.column_size()) {
-    return false;
-  }
-  for (size_t i = 0; i < left.row_size(); i++) {
-    for (size_t j = 0; j < left.column_size(); j++) {
-      if (left.get(i, j) != right.get(i, j)) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return left == *right.to_matrix();
 }
 
 inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
@@ -93,17 +82,14 @@ inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
       matrix.row_size() != expected_size) {
     return false;
   }
-  for (auto m = 0; m < matrix.row_size(); m++) {
-    for (auto n = 0; n < matrix.column_size(); n++) {
-      if (m == n) {
-        if (matrix.get(m, n) != Complex(1, 0)) {
-          return false;
-        }
-      } else {
-        if (matrix.get(m, n) != Complex(0, 0)) {
-          return false;
-        }
-      }
+
+  for (size_t m = 0; m < matrix.row_size(); m++) {
+    if (!approx_equal(matrix.get(m, m), Complex(1, 0))) {
+      return false;
+    }
+    auto row = matrix.get_row(m);
+    if (!approx_equal(simd::cvsve(*row), Complex(1, 0))) {
+      return false;
     }
   }
   return true;

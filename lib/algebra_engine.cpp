@@ -211,10 +211,10 @@ Complex outer_product_mat_mat(const ComplexVectMatrix &left,
 std::unique_ptr<ComplexVectSplit>
 outer_product_mat_mat_row(const ComplexVectMatrix &left,
                           const ComplexVectMatrix &right, const size_t row) {
-  auto vect_left = left.get_row(0);
+  auto scal_left = left.get(0, row);
   auto vect_right = right.get_row(0)->conj();
 
-  return simd::cvmul(*vect_left, *vect_right);
+  return simd::cvsmul(*vect_right, scal_left);
 }
 
 /*

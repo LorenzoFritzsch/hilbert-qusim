@@ -68,8 +68,7 @@ bool it_should_compute_outer_product() {
   // Then
   const ComplexMatrix expected = {{0, 1}, {0, 0}};
 
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
-                            *result);
+  return are_matrices_equal(ComplexVectMatrix(expected), *result);
 }
 
 bool it_should_compute_matrix_vector_product() {

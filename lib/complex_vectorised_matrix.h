@@ -97,8 +97,8 @@ public:
   [[nodiscard]] std::unique_ptr<ComplexVectSplit>
   get_column(const size_t column) const {
     ComplexVectSplit result;
-    for (size_t i = column; i < column_size_; i += column_size_) {
-      result.add(vectorised_matrix_[i]);
+    for (size_t m = 0; m < row_size_; m++) {
+      result.add(vectorised_matrix_[m * column_size_ + column]);
     }
     return std::make_unique<ComplexVectSplit>(result);
   }
