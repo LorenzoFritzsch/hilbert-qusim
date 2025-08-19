@@ -19,7 +19,7 @@
 #include <cstddef>
 #include <vector>
 
-class StateVector {
+class StateVector final {
 public:
   explicit StateVector(const std::vector<Qubit> state_vector)
       : state_vector_(state_vector) {}
