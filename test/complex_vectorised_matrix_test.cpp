@@ -25,12 +25,48 @@ bool it_should_create_vectorised_matrix() {
   return verify_identity_matrix(*m_vectorised, 2);
 }
 
+bool it_should_compare_vect_matrices() {
+  // Given
+  auto vect_a = ComplexVectMatrix(identity_2x2);
+  auto vect_b = ComplexVectMatrix(hadamard_2x2);
+
+  // When
+  auto a_eq_a = vect_a == vect_a;
+  auto b_eq_b = vect_b == vect_b;
+  auto a_eq_b = vect_a == vect_b;
+  auto b_eq_a = vect_b == vect_a;
+
+  // Then
+  return a_eq_a && b_eq_b && !a_eq_b && !b_eq_a;
+}
+
+bool it_should_split_vect_matrix() {
+  // Given
+  auto mat = ComplexVectMatrix(pauli_y);
+
+  // When
+  auto mat_split = mat.split();
+
+  // Then
+  std::vector<__complex_precision> real_exp = {0, 0, 0, 0};
+  std::vector<__complex_precision> imag_exp = {0, -1, 1, 0};
+  auto real_act = *mat_split->real();
+  auto imag_act = *mat_split->imag();
+  return real_exp == real_act && imag_exp == imag_act;
+}
+
 int main() {
   int total = 0;
   int failed = 0;
 
   run_test("it_should_create_vectorised_matrix",
            it_should_create_vectorised_matrix, failed, total);
+
+  run_test("it_should_compare_vect_matrices", it_should_compare_vect_matrices,
+           failed, total);
+
+  run_test("it_should_split_vect_matrix", it_should_split_vect_matrix, failed,
+           total);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

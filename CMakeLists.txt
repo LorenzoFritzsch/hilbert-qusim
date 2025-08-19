@@ -60,13 +60,17 @@ enable_testing()
 set(CMAKE_BUILD_TYPE Debug)
 set(TEST_DIR "${PROJECT_SOURCE_DIR}/test")
 
-add_executable(algebra_engine_test "${TEST_DIR}/algebra_engine_test.cpp")
-target_link_libraries(algebra_engine_test hilbert)
-add_test(NAME "algebra_engine_test" COMMAND algebra_engine_test)
-
 add_executable(vectorised_matrix_test "${TEST_DIR}/complex_vectorised_matrix_test.cpp")
 target_link_libraries(vectorised_matrix_test hilbert)
 add_test(NAME "vectorised_matrix_test" COMMAND vectorised_matrix_test)
+
+add_executable(complex_vector_split_test "${TEST_DIR}/complex_vector_split_test.cpp")
+target_link_libraries(complex_vector_split_test hilbert)
+add_test(NAME "complex_vector_split_test" COMMAND complex_vector_split_test)
+
+add_executable(algebra_engine_test "${TEST_DIR}/algebra_engine_test.cpp")
+target_link_libraries(algebra_engine_test hilbert)
+add_test(NAME "algebra_engine_test" COMMAND algebra_engine_test)
 
 add_executable(qubit_test "${TEST_DIR}/qubit_test.cpp")
 target_link_libraries(qubit_test hilbert)
