@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "complex_vector_split.h"
-#include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
 
 bool it_should_create_cvs_from_complex_vector() {

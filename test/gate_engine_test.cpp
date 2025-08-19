@@ -15,7 +15,6 @@
 #include "complex_vectorised_matrix.h"
 #include "gate_engine.h"
 #include "hilbert_namespace_test.h"
-#include <cmath>
 #include <memory>
 
 bool it_should_apply_gate() {

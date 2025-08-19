@@ -17,7 +17,6 @@
 
 #include "state_vector.h"
 #include <memory.h>
-#include <memory>
 
 class CircuitEngine {
 public:

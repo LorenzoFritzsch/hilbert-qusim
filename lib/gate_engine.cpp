@@ -18,7 +18,6 @@
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
 #include "qubit.h"
-#include <cmath>
 #include <complex>
 #include <memory>
 #include <numbers>

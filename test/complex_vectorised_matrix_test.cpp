@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "complex_vectorised_matrix.h"
-#include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
 #include <memory>
 

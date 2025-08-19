@@ -16,7 +16,6 @@
 #include "hilbert_namespace_test.h"
 #include "qubit.h"
 #include "state_vector.h"
-#include <cmath>
 #include <vector>
 
 bool it_should_compute_qft() {
