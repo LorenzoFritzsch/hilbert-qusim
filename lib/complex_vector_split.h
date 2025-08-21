@@ -20,11 +20,12 @@
 #include <stdexcept>
 #include <vector>
 
-#if defined(__APPLE__)
-#include <Accelerate/Accelerate.h>
+#ifdef __APPLE__
+#include "simd_apple.h"
+using __simd__ = simd_apple;
 #else
-#include <cstddef>
-#include <immintrin.h>
+#include "simd_avx.h"
+using __simd__ = simd_avx;
 #endif
 
 class ComplexVectSplit {
@@ -76,26 +77,7 @@ public:
   std::unique_ptr<ComplexVectSplit> conj() {
     __complex_precision k = -1;
     std::vector<__complex_precision> imag_conj(imag_.size());
-
-#if defined(__APPLE__)
-    vDSP_vsmul(imag_.data(), 1, &k, imag_conj.data(), 1, imag_conj.size());
-#else
-    __m256 scalar_vec = _mm256_set1_ps(k);
-
-    size_t i = 0;
-    size_t element_size = sizeof(__complex_precision) * 8;
-    size_t elements_per_block = 256 / element_size;
-    auto src = imag_.data();
-    for (; i + elements_per_block <= imag_conj.size();
-         i += elements_per_block) {
-      __m256 vec = _mm256_loadu_ps(src + i);
-      __m256 result = _mm256_mul_ps(vec, scalar_vec);
-      _mm256_storeu_ps(imag_conj.data() + i, result);
-    }
-    for (; i < imag_conj.size(); i++) {
-      imag_conj[i] = src[i] * k;
-    }
-#endif
+    __simd__::vsmul(imag_.data(), &k, imag_conj.data(), imag_conj.size());
     return std::make_unique<ComplexVectSplit>(real_, imag_conj);
   }
 

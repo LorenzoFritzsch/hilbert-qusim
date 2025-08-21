@@ -66,10 +66,10 @@ public:
     std::vector<__complex_precision> vect_ac(length), vect_bd(length),
         vect_ad(length), vect_bc(length);
 
-    vsmul(vect_real, k_real, vect_ac.data(), vect_ac.size());
-    vsmul(vect_imag, k_imag, vect_bd.data(), vect_bd.size());
-    vsmul(vect_real, k_imag, vect_ad.data(), vect_ad.size());
-    vsmul(vect_imag, k_real, vect_bc.data(), vect_bc.size());
+    vsmul(vect_real, &k_real, vect_ac.data(), vect_ac.size());
+    vsmul(vect_imag, &k_imag, vect_bd.data(), vect_bd.size());
+    vsmul(vect_real, &k_imag, vect_ad.data(), vect_ad.size());
+    vsmul(vect_imag, &k_real, vect_bc.data(), vect_bc.size());
 
     vsub(vect_ac.data(), vect_bd.data(), result_real, length);
     vadd(vect_ad.data(), vect_bc.data(), result_imag, length);
@@ -99,9 +99,9 @@ public:
    * Scalar-vector multiplication.
    */
   static void vsmul(const __complex_precision *vect,
-                    const __complex_precision &scalar,
+                    const __complex_precision *scalar,
                     __complex_precision *result, size_t length) {
-    __m256 scalar_vec = _mm256_set1_ps(scalar);
+    __m256 scalar_vec = _mm256_set1_ps(*scalar);
 
     size_t i = 0;
     size_t element_size = sizeof(__complex_precision) * 8;
@@ -112,7 +112,7 @@ public:
       _mm256_storeu_ps(result + i, res);
     }
     for (; i < length; i++) {
-      result[i] = vect[i] * scalar;
+      result[i] = vect[i] * *scalar;
     }
   }
 
