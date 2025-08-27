@@ -59,8 +59,8 @@ bool it_should_compute_inner_product() {
 
 bool it_should_compute_outer_product() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_0));
-  auto b = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_1));
+  auto a = ComplexVectMatrix::ket_0();
+  auto b = ComplexVectMatrix::ket_1();
 
   // When
   const auto result = AlgebraEngine::outer_product(*a, *b);
@@ -73,21 +73,20 @@ bool it_should_compute_outer_product() {
 
 bool it_should_compute_matrix_vector_product() {
   // Given
-  auto mat = std::make_unique<ComplexVectMatrix>(ComplexMatrix(pauli_x));
-  auto vect = std::make_unique<ComplexVectMatrix>(ComplexVector(ket_0));
+  auto mat = ComplexVectMatrix::pauli_x();
+  auto vect = ComplexVectMatrix::ket_0();
 
   // When
   const auto result = AlgebraEngine::matrix_vector_product(*mat, *vect);
 
   // Then
-  const auto expected =
-      std::make_unique<ComplexVectMatrix>(ComplexVector(ket_1));
+  const auto expected = ComplexVectMatrix::ket_1();
   return are_matrices_equal(*expected, *result);
 }
 
 bool it_should_compute_scalar_product() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  auto a = ComplexVectMatrix::identity_2x2();
   constexpr Complex k = {1, 4};
 
   // When
@@ -116,8 +115,8 @@ bool it_should_compute_scalar_vector_product() {
 
 bool it_should_compute_sum() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
-  auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  auto a = ComplexVectMatrix::identity_2x2();
+  auto b = ComplexVectMatrix::identity_2x2();
 
   // When
   const auto result = AlgebraEngine::sum(*a, *b);
@@ -130,8 +129,8 @@ bool it_should_compute_sum() {
 
 bool it_should_compute_tensor_product() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(hadamard_2x2));
-  auto b = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  auto a = ComplexVectMatrix::hadamard_2x2();
+  auto b = ComplexVectMatrix::identity_2x2();
 
   // When
   const auto result = AlgebraEngine::tensor_product(*a, *b);
@@ -150,7 +149,7 @@ bool it_should_compute_tensor_product() {
 
 bool it_should_compute_matrix_power() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(identity_2x2));
+  auto a = ComplexVectMatrix::identity_2x2();
   constexpr auto times = 8;
 
   // When
@@ -173,7 +172,7 @@ bool it_should_compute_matrix_power() {
 
 bool it_should_verify_unitarity() {
   // Given
-  auto a = std::make_unique<ComplexVectMatrix>(ComplexMatrix(hadamard_2x2));
+  auto a = ComplexVectMatrix::hadamard_2x2();
 
   // When
   auto perf_test = pt_start("unitarity check");

@@ -18,7 +18,7 @@
 
 bool it_should_create_vectorised_matrix() {
   // When
-  const auto m_vectorised = std::make_unique<ComplexVectMatrix>(identity_2x2);
+  const auto m_vectorised = ComplexVectMatrix::identity_2x2();
 
   // Then
   return verify_identity_matrix(*m_vectorised, 2);
@@ -26,8 +26,8 @@ bool it_should_create_vectorised_matrix() {
 
 bool it_should_compare_vect_matrices() {
   // Given
-  auto vect_a = ComplexVectMatrix(identity_2x2);
-  auto vect_b = ComplexVectMatrix(hadamard_2x2);
+  auto vect_a = *ComplexVectMatrix::identity_2x2();
+  auto vect_b = *ComplexVectMatrix::hadamard_2x2();
 
   // When
   auto a_eq_a = vect_a == vect_a;
@@ -41,10 +41,10 @@ bool it_should_compare_vect_matrices() {
 
 bool it_should_split_vect_matrix() {
   // Given
-  auto mat = ComplexVectMatrix(pauli_y);
+  auto mat = ComplexVectMatrix::pauli_y();
 
   // When
-  auto mat_split = mat.split();
+  auto mat_split = mat->split();
 
   // Then
   std::vector<__complex_precision> real_exp = {0, 0, 0, 0};

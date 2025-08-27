@@ -19,28 +19,27 @@
 
 bool it_should_apply_gate() {
   // Given
-  auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
-  auto state = std::make_unique<ComplexVectMatrix>(ket_0);
+  auto gate = ComplexVectMatrix::pauli_x();
+  auto state = ComplexVectMatrix::ket_0();
 
   // When
   const auto result = GateEngine::apply_gate(*gate, *state);
 
   // Then
-  return are_matrices_equal(ComplexVectMatrix(ket_1), *result);
+  return are_matrices_equal(*ComplexVectMatrix::ket_1(), *result);
 }
 
 bool it_should_apply_controlled_gate() {
   // Given
   auto target = std::make_unique<Qubit>(1, 0);
   auto control = std::make_unique<Qubit>(0, 1);
-  auto gate = std::make_unique<ComplexVectMatrix>(pauli_x);
+  auto gate = ComplexVectMatrix::pauli_x();
 
   // When
   auto result = GateEngine::controlled_u(*target, *control, *gate);
 
   // Then
-  const auto expected = ket_1;
-  return ComplexVectMatrix(ket_1) == *result->to_vector();
+  return *ComplexVectMatrix::ket_1() == *result->to_vector();
 }
 
 bool it_should_apply_hadamard() {

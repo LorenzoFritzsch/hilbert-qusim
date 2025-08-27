@@ -27,7 +27,7 @@ bool it_should_create_qubit() {
   const auto qubit = std::make_unique<Qubit>(alpha, beta);
 
   // Then
-  return ComplexVectMatrix(ket_0) == *qubit->to_vector();
+  return *ComplexVectMatrix::ket_0() == *qubit->to_vector();
 }
 
 bool it_should_not_create_qubit_with_invalid_alpha_beta() {
@@ -46,18 +46,18 @@ bool it_should_not_create_qubit_with_invalid_alpha_beta() {
 
 bool it_should_create_qubit_cvm() {
   // Given
-  auto qubit_vect = std::make_unique<ComplexVectMatrix>(ket_0);
+  auto qubit_vect = ComplexVectMatrix::ket_0();
 
   // When
   const auto qubit = std::make_unique<Qubit>(*qubit_vect);
 
   // Then
-  return ComplexVectMatrix(ket_0) == *qubit->to_vector();
+  return *ComplexVectMatrix::ket_0() == *qubit->to_vector();
 }
 
 bool it_should_not_create_qubit_invalid_cvm() {
   // Given
-  auto invalid_opmember = std::make_unique<ComplexVectMatrix>(hadamard_2x2);
+  auto invalid_opmember = ComplexVectMatrix::hadamard_2x2();
 
   // When - Then
   try {

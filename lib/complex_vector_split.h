@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <vector>
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #else
 #include <cstddef>
@@ -81,7 +81,7 @@ public:
     __complex_precision k = -1;
     std::vector<__complex_precision> imag_conj(imag_.size());
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
     vDSP_vsmul(imag_.data(), 1, &k, imag_conj.data(), 1, imag_conj.size());
 #else
     __m256 scalar_vec = _mm256_set1_ps(k);

@@ -99,7 +99,7 @@ std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
 
 std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {
   auto result = AlgebraEngine::matrix_vector_product(
-      ComplexVectMatrix(hadamard_2x2), *qubit.to_vector());
+      *ComplexVectMatrix::hadamard_2x2(), *qubit.to_vector());
   return std::make_unique<Qubit>(*result);
 }
 
