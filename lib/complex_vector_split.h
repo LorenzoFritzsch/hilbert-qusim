@@ -27,6 +27,10 @@
 #include <immintrin.h>
 #endif
 
+/*
+ * This class represents a vector of complex numbers, with real and imaginary
+ * parts split into two different vectors to facilitate SIMD operations.
+ */
 class ComplexVectSplit {
 public:
   ComplexVectSplit() = default;

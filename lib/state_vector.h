@@ -19,6 +19,9 @@
 #include <cstddef>
 #include <vector>
 
+/*
+ * This class represents a full state-vector, where each element is a `Qubit`.
+ */
 class StateVector final {
 public:
   explicit StateVector(const std::vector<Qubit> state_vector)

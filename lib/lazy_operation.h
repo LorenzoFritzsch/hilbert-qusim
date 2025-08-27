@@ -23,6 +23,17 @@
 #include <memory>
 #include <vector>
 
+/*
+ * This class represents the binary tree of the operations. To assure that a
+ * `LazyOperation` can always be solved, the base node must be an operation of
+ * type `MatrixMatrix`, for this reason the only available constructors take
+ * `ComplexVectMatrix` as input.
+ * Lazy operations can be merged together to have one single `LazyOperation`.
+ *
+ * The actual tree structure is held in the vector of operations. The last
+ * `Operation` in the vector is assured to be the last operation, so by calling
+ * its `get` methods we are able to retrieve the specified element/row.
+ */
 class LazyOperation final {
 public:
   using op_op =

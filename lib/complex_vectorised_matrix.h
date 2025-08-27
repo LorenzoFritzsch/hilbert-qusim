@@ -22,6 +22,10 @@
 #include <functional>
 #include <memory>
 
+/*
+ * This class represents a matrix in a vectorised form, in order to have all the
+ * elements in a contiguous space and improve efficiency.
+ */
 class ComplexVectMatrix final {
 public:
   explicit ComplexVectMatrix(const ComplexMatrix &m)

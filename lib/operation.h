@@ -21,6 +21,13 @@
 #include <functional>
 #include <variant>
 
+/*
+ * This enum defines all the supported operations:
+ * - `OperationOperation` is an operation between lazy operations.
+ * - `OperationMatrix` is an operation between a lazy operation and a matrix.
+ * - `MatrixOperation` is an operation between a matrix and a lazy operation.
+ * - `MatrixMatrix` is an operation between matrices.
+ */
 enum OperationType {
   OperationOperation,
   OperationMatrix,
@@ -28,6 +35,30 @@ enum OperationType {
   MatrixMatrix
 };
 
+/*
+ * This class represents a single node in the binary tree of lazy operations. As
+ * `LazyOperation` uses `std::vector` to hold the operands, `Operation` stores
+ * the indexes of the left and right operands, in order to avoid the overhead of
+ * managing invalid references when resizing the vectors in `LazyOperation`.
+ * Then the `OperationType` enum is used to know which kind of operation is
+ * being performed.
+ *
+ * `Operation` offers two ways for retrieving the elements of the resulting
+ * matrix:
+ * 1. An element-specific get, via the `get(size_t row, size_t column)` method.
+ * 2. A SIMD accelerated get of a row, via the `get(size_t row)` method.
+ *
+ * Here, a visualisation of a `Operation` node:
+ *
+ * +------------------------+ +-------------------------+
+ * | Left Operand Reference | | Right Operand Reference |
+ * +------------------------+ +-------------------------+
+ *          \                               /
+ *           \                            /
+ *           +----------------------------+
+ *           |     Operation Functor      |
+ *           +----------------------------+
+ */
 class Operation final {
 public:
   using op_op =
@@ -96,28 +127,39 @@ public:
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
 
-  [[nodiscard]] Complex get(const size_t m, const size_t n) const {
+  /*
+   * Element-specific get.
+   * @param row The row where the element lies.
+   * @param col The column where the element lies.
+   * @return the requested element.
+   */
+  [[nodiscard]] Complex get(const size_t row, const size_t col) const {
     switch (op_type_) {
     case OperationOperation: {
       auto op = std::get<op_op>(op_functor_);
-      return op(op_vect_[left_index_], op_vect_[right_index_], m, n);
+      return op(op_vect_[left_index_], op_vect_[right_index_], row, col);
     }
     case OperationMatrix: {
       auto op = std::get<op_mat>(op_functor_);
-      return op(op_vect_[left_index_], mat_vect_[right_index_], m, n);
+      return op(op_vect_[left_index_], mat_vect_[right_index_], row, col);
     }
     case MatrixOperation: {
       auto op = std::get<mat_op>(op_functor_);
-      return op(mat_vect_[left_index_], op_vect_[right_index_], m, n);
+      return op(mat_vect_[left_index_], op_vect_[right_index_], row, col);
     }
     case MatrixMatrix: {
       auto op = std::get<mat_mat>(op_functor_);
-      return op(mat_vect_[left_index_], mat_vect_[right_index_], m, n);
+      return op(mat_vect_[left_index_], mat_vect_[right_index_], row, col);
     }
     }
     throw std::logic_error("Unexpected OperationType");
   }
 
+  /*
+   * Retrieves the requested row.
+   * @param row The row to be retrieved.
+   * @return the requested row, as a pointer to a `ComplexVectSplit`
+   */
   [[nodiscard]] std::unique_ptr<ComplexVectSplit> get(const size_t row) const {
     switch (op_type_) {
     case OperationOperation: {
@@ -160,6 +202,8 @@ public:
 
   [[nodiscard]] size_t left_index() const { return left_index_; }
 
+  [[nodiscard]] size_t right_index() const { return right_index_; }
+
   [[nodiscard]] std::variant<Operation, ComplexVectMatrix> right() const {
     switch (op_type_) {
     case OperationOperation:
@@ -171,8 +215,6 @@ public:
     }
     throw std::logic_error("Unexpected OperationType");
   }
-
-  [[nodiscard]] size_t right_index() const { return right_index_; }
 
   [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_functor() {
     return op_functor_;
