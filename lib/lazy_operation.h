@@ -59,12 +59,6 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
-  // A `LazyOperation` can be moved but not copied.
-  LazyOperation(LazyOperation &&) = default;
-  LazyOperation &operator=(LazyOperation &&) = default;
-  LazyOperation(const LazyOperation &) = delete;
-  LazyOperation &operator=(const LazyOperation &) = delete;
-
   LazyOperation(const ComplexVectMatrix &left, const ComplexVectMatrix &right,
                 mat_mat op, mat_mat_row op_row, const size_t final_row_size,
                 const size_t final_column_size) {
@@ -86,6 +80,13 @@ public:
         mat.row_size(), mat.column_size());
   }
 
+  LazyOperation(const ComplexVectMatrix &left, const LazyOperation &right,
+                op_op op, op_op_row op_row, const size_t final_row_size,
+                const size_t final_column_size)
+      : LazyOperation(left) {
+    append(right, op, op_row, final_row_size, final_column_size);
+  }
+
   LazyOperation(const ComplexVectMatrix &mat, mat_mat_row op_row) {
     mat_vect_.push_back(mat);
     op_vect_.emplace_back(
@@ -96,28 +97,18 @@ public:
         op_row, mat.row_size(), mat.column_size());
   }
 
-  void
-  append(const ComplexVectMatrix &mat, op_mat op, op_mat_row op_row,
-         std::function<size_t(size_t, size_t, size_t, size_t)> row_size,
-         std::function<size_t(size_t, size_t, size_t, size_t)> column_size) {
+  void append(const ComplexVectMatrix &mat, op_mat op, op_mat_row op_row,
+              const size_t final_row_size, const size_t final_column_size) {
     mat_vect_.push_back(mat);
     auto op_index = op_vect_.size() - 1;
     auto mat_index = mat_vect_.size() - 1;
-    auto final_row_size = row_size(op_vect_[op_index].row_size(),
-                                   op_vect_[op_index].column_size(),
-                                   mat.row_size(), mat.column_size());
-    auto final_column_size = column_size(op_vect_[op_index].row_size(),
-                                         op_vect_[op_index].column_size(),
-                                         mat.row_size(), mat.column_size());
     op_vect_.emplace_back(op_index, mat_index, mat_vect_, op_vect_,
                           std::move(op), std::move(op_row), final_row_size,
                           final_column_size);
   }
 
-  void
-  append(const LazyOperation &lazy_op, op_op op, op_op_row op_row,
-         std::function<size_t(size_t, size_t, size_t, size_t)> row_size,
-         std::function<size_t(size_t, size_t, size_t, size_t)> column_size);
+  void append(const LazyOperation &lazy_op, op_op op, op_op_row op_row,
+              const size_t final_row_size, const size_t column_size);
 
   [[nodiscard]] Complex get(const size_t m, const size_t n) const {
     return op_vect_.back().get(m, n);
@@ -139,8 +130,45 @@ public:
 
   [[nodiscard]] std::vector<Operation> op_vect() const { return op_vect_; }
 
+  // *** Frequently used matrices and vectors. ***
+
+  /*
+   * Returns the lazy identity matrix of size `size`.
+   */
+  [[nodiscard]] static std::unique_ptr<LazyOperation>
+  identity(const size_t size) {
+    return std::unique_ptr<LazyOperation>(new LazyOperation(
+        [](const ComplexVectMatrix &left, const ComplexVectMatrix &right,
+           const size_t m, const size_t n) -> Complex {
+          if (m == n) {
+            return 1;
+          } else {
+            return 0;
+          }
+        },
+        [size](const ComplexVectMatrix &left, const ComplexVectMatrix &right,
+               const size_t row) -> std::unique_ptr<ComplexVectSplit> {
+          auto res = std::make_unique<ComplexVectSplit>();
+          for (int i = 0; i < size; i++) {
+            if (i != row) {
+              res->add(0);
+            } else {
+              res->add(1);
+            }
+          }
+          return res;
+        },
+        size, size));
+  }
+
 private:
   std::vector<ComplexVectMatrix> mat_vect_;
   std::vector<Operation> op_vect_;
+
+  LazyOperation(mat_mat op, mat_mat_row op_row, const size_t row_size,
+                const size_t col_size) {
+    op_vect_.emplace_back(-1, -1, mat_vect_, op_vect_, std::move(op),
+                          std::move(op_row), row_size, col_size);
+  }
 };
 #endif // !LAZY_OPERATION_H

@@ -84,6 +84,19 @@ bool it_should_compute_matrix_vector_product() {
   return are_matrices_equal(*expected, *result);
 }
 
+bool it_should_compute_matrix_exponentiation() {
+  // Given
+  auto mat = ComplexVectMatrix::identity_2x2();
+  auto folds = 15;
+
+  // When
+  const auto result = AlgebraEngine::matrix_exp(*mat, folds);
+
+  // Then
+  const auto expected = ComplexVectMatrix::identity_2x2();
+  return are_matrices_equal(*expected, *result);
+}
+
 bool it_should_compute_scalar_product() {
   // Given
   auto a = ComplexVectMatrix::identity_2x2();
@@ -147,14 +160,14 @@ bool it_should_compute_tensor_product() {
                             *result);
 }
 
-bool it_should_compute_matrix_power() {
+bool it_should_compute_n_fold_tensor_product() {
   // Given
   auto a = ComplexVectMatrix::identity_2x2();
   constexpr auto times = 8;
 
   // When
   auto perf_test_setup =
-      pt_start(std::to_string(times) + " lazy tensor products");
+      pt_start(std::to_string(times) + " folds lazy tensor product");
   const auto result = AlgebraEngine::tensor_product(*a, times);
   pt_stop(perf_test_setup);
 
@@ -210,11 +223,14 @@ int main() {
   run_test("it_should_compute_matrix_vector_product",
            it_should_compute_matrix_vector_product, failed, total, true);
 
+  run_test("it_should_compute_matrix_exponentiation",
+           it_should_compute_matrix_exponentiation, failed, total, true);
+
   run_test("it_should_verify_unitarity", it_should_verify_unitarity, failed,
            total, false);
 
-  run_test("it_should_compute_matrix_power", it_should_compute_matrix_power,
-           failed, total, false);
+  run_test("it_should_compute_n_fold_tensor_product",
+           it_should_compute_n_fold_tensor_product, failed, total, false);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

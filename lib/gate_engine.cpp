@@ -20,8 +20,8 @@
 #include "qubit.h"
 #include <complex>
 #include <memory>
-#include <numbers>
 #include <stdexcept>
+#include <string>
 
 std::unique_ptr<LazyOperation> make_controlled_u(const ComplexVectMatrix &u) {
   auto proj_i = ComplexVectMatrix(
@@ -32,32 +32,55 @@ std::unique_ptr<LazyOperation> make_controlled_u(const ComplexVectMatrix &u) {
 }
 
 std::unique_ptr<ComplexVectMatrix>
-reduced_density_matrix(const LazyOperation &s) {
+reduced_density_matrix_control(const LazyOperation &s) {
   if (s.row_size() != 1 || s.column_size() != 4) {
     throw std::invalid_argument(
-        "Cannot compute reduced density matrix for state vector of size != 4");
+        "Cannot compute reduced density matrix for state vector of size (" +
+        std::to_string(s.row_size()) + "x" + std::to_string(s.column_size()) +
+        ") != (1, 4)");
   }
   auto alpha = s.get(0, 0);
   auto beta = s.get(0, 1);
   auto gamma = s.get(0, 2);
   auto delta = s.get(0, 3);
   return std::make_unique<ComplexVectMatrix>(
-      ComplexMatrix({{alpha * std::conj(alpha) + gamma * std::conj(gamma),
-                      alpha * std::conj(beta) + gamma * std::conj(delta)},
-                     {beta * std::conj(alpha) + delta * std::conj(gamma),
-                      beta * std::conj(beta) + delta * std::conj(delta)}}));
+      ComplexMatrix({{std::norm(alpha) + std::norm(beta),
+                      alpha * std::conj(gamma) + beta * std::conj(delta)},
+                     {gamma * std::conj(alpha) + delta * std::conj(beta),
+                      std::norm(gamma) + std::norm(delta)}}));
 }
 
-std::unique_ptr<Qubit> trace_out_target(const LazyOperation &s) {
-  auto reduced = reduced_density_matrix(s);
+std::unique_ptr<ComplexVectMatrix>
+reduced_density_matrix_target(const LazyOperation &s) {
+  if (s.row_size() != 1 || s.column_size() != 4) {
+    throw std::invalid_argument(
+        "Cannot compute reduced density matrix for state vector of size (" +
+        std::to_string(s.row_size()) + "x" + std::to_string(s.column_size()) +
+        ") != (1, 4)");
+  }
+  auto alpha = s.get(0, 0);
+  auto beta = s.get(0, 1);
+  auto gamma = s.get(0, 2);
+  auto delta = s.get(0, 3);
+  return std::make_unique<ComplexVectMatrix>(
+      ComplexMatrix({{std::norm(alpha) + std::norm(gamma),
+                      alpha * std::conj(beta) + gamma * std::conj(delta)},
+                     {beta * std::conj(alpha) + delta * std::conj(gamma),
+                      std::norm(beta) + std::norm(delta)}}));
+}
+
+/*
+ * Traces out the qubit from the reduced density matrix.
+ */
+std::unique_ptr<Qubit> trout(const ComplexVectMatrix &reduced) {
   Complex zero(0), one(1);
   Complex alpha, beta;
-  alpha = reduced->get(0, 0) - one;
-  beta = reduced->get(0, 1);
+  alpha = reduced.get(0, 0) - one;
+  beta = reduced.get(0, 1);
 
   if (approx_equal(alpha, zero) && approx_equal(beta, zero)) {
-    alpha = reduced->get(1, 0);
-    beta = reduced->get(1, 1) - one;
+    alpha = reduced.get(1, 0);
+    beta = reduced.get(1, 1) - one;
   }
 
   if (approx_equal(alpha, zero)) {
@@ -69,13 +92,49 @@ std::unique_ptr<Qubit> trace_out_target(const LazyOperation &s) {
   } else {
     beta = (-alpha) / beta;
     alpha = one;
-    auto norm =
-        static_cast<Complex>(std::sqrt(std::norm(alpha) + std::norm(beta)));
-    alpha = alpha / norm;
-    beta = beta / norm;
+    auto n = static_cast<Complex>(std::sqrt(norm(alpha, beta)));
+    alpha = alpha / n;
+    beta = beta / n;
   }
 
   return std::make_unique<Qubit>(alpha, beta);
+}
+
+inline void verify_unitarity(const ComplexVectMatrix &u) {
+  if (!AlgebraEngine::is_unitary(u)) {
+    throw std::invalid_argument("Matrix is not unitary");
+  }
+}
+
+inline void verify_vector(const LazyOperation &v, const size_t size) {
+  if (v.row_size() != 1 || v.column_size() != size) {
+    throw std::invalid_argument(
+        "LazyOperation does not represent a valid (1, " + std::to_string(size) +
+        ") vector: is (" + std::to_string(v.row_size()) + ", " +
+        std::to_string(v.column_size()) + ") instead");
+  }
+}
+
+inline void verify_sqmatrix(const ComplexVectMatrix &m, const size_t dim) {
+  if (m.row_size() != m.column_size() || m.row_size() != dim) {
+    auto dim_str = std::to_string(dim);
+    throw std::invalid_argument("Matrix does not represent a valid (" +
+                                dim_str + ", " + dim_str + ") matrix: is (" +
+                                std::to_string(m.row_size()) + ", " +
+                                std::to_string(m.column_size()) + ") instead");
+  }
+}
+
+std::unique_ptr<Qubit> GateEngine::trout_control(const LazyOperation &s) {
+  verify_vector(s, 4);
+  auto reduced = reduced_density_matrix_control(s);
+  return trout(*reduced);
+}
+
+std::unique_ptr<Qubit> GateEngine::trout_target(const LazyOperation &s) {
+  verify_vector(s, 4);
+  auto reduced = reduced_density_matrix_target(s);
+  return trout(*reduced);
 }
 
 std::unique_ptr<LazyOperation>
@@ -87,29 +146,47 @@ GateEngine::apply_gate(const ComplexVectMatrix &gate,
 std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
                                                 const Qubit &control,
                                                 const ComplexVectMatrix &u) {
-  if (!AlgebraEngine::is_unitary(u)) {
-    throw std::runtime_error("U is not unitary");
-  }
+  verify_sqmatrix(u, 2);
+  verify_unitarity(u);
   auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
-  auto transformed_state = AlgebraEngine::matrix_vector_product(
-      std::move(make_controlled_u(u)), std::move(state));
-  return trace_out_target(*transformed_state);
+  auto controlled_u = make_controlled_u(u);
+  auto transformed_state =
+      AlgebraEngine::matrix_vector_product(*controlled_u, *state);
+  return trout_target(*transformed_state);
+}
+
+// TODO: Remove
+#include "../test/hilbert_namespace_test.h"
+
+std::unique_ptr<LazyOperation>
+GateEngine::controlled_u_stv(const Qubit &target, const Qubit &control,
+                             const ComplexVectMatrix &u) {
+  verify_sqmatrix(u, 2);
+  verify_unitarity(u);
+
+  mxout(*target.to_vector(), "Target before controlled-U");
+  mxout(*control.to_vector(), "Control before controlled-U");
+
+  auto state =
+      AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
+
+  mxout(*state->to_matrix(), "State before controlled-U");
+
+  auto controlled_u = make_controlled_u(u);
+
+  mxout(*controlled_u->to_matrix(), "Controlled-U");
+
+  auto transformed_state =
+      AlgebraEngine::matrix_vector_product(*controlled_u, *state);
+
+  mxout(*transformed_state->to_matrix(), "State after controlled-U");
+
+  return std::move(transformed_state);
 }
 
 std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {
   auto result = AlgebraEngine::matrix_vector_product(
       *ComplexVectMatrix::hadamard_2x2(), *qubit.to_vector());
   return std::make_unique<Qubit>(*result);
-}
-
-std::unique_ptr<ComplexVectMatrix> GateEngine::r_k(const int k, bool inverse) {
-  auto rotation = 2 * std::numbers::pi / std::pow(2, k);
-  if (inverse) {
-    rotation = -rotation;
-  }
-  auto rotation_real = std::cos(rotation);
-  auto rotation_imag = std::sin(rotation);
-  return std::make_unique<ComplexVectMatrix>(
-      ComplexMatrix({{1, 0}, {0, Complex(rotation_real, rotation_imag)}}));
 }

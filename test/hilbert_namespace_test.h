@@ -18,10 +18,13 @@
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
+#include "state_vector.h"
 #include <cstddef>
 #include <iostream>
 
 #include <chrono>
+#include <ostream>
+#include <string>
 
 /*
  * Formats a delta from microseconds to seconds.
@@ -95,6 +98,73 @@ inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
   return true;
 }
 
+/*
+ * Prints out a state vector.
+ */
+inline void svout(const StateVector &v, const std::string &title) {
+  const auto size = v.size();
+  const auto qbits = v.get();
+  std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
+  auto sq2 = 1 / std::sqrt(2);
+  for (int i = size - 1; i >= 0; i--) {
+    auto q = *v[i].to_vector();
+    auto alpha = q.get(0, 0);
+    auto beta = q.get(0, 1);
+    alpha = approx_equal(alpha, 0) ? 0 : alpha;
+    alpha = approx_equal(alpha, 1) ? 1 : alpha;
+    beta = approx_equal(beta, 0) ? 0 : beta;
+    beta = approx_equal(beta, 1) ? 1 : beta;
+    auto na = std::norm(alpha);
+    auto nb = std::norm(beta);
+    std::string ket0 = "\033[1;90m|0>\033[0m";
+    std::string ket1 = "\033[1;90m|1>\033[0m";
+    if (na > nb) {
+      ket0 = "\033[1;97m|0>\033[0m";
+    } else if (na < nb) {
+      ket1 = "\033[1;97m|1>\033[0m";
+    }
+    std::string r = "";
+    if (approx_equal(nb, 0)) {
+      r = " => \033[96m|0>\033[0m";
+    } else if (approx_equal(na, 0)) {
+      r = " => \033[96m|1>\033[0m";
+    } else if (approx_equal(na, nb)) {
+      if (approx_equal(alpha, sq2) && approx_equal(beta, sq2)) {
+        r = " => \033[96m|+>\033[0m";
+      } else if (approx_equal(alpha, sq2) && approx_equal(beta, -sq2)) {
+        r = " => \033[96m|->\033[0m";
+      }
+    }
+
+    std::cout << std::to_string(i) << "---------\033[94m alpha: \033[0m"
+              << (alpha.real() >= 0 ? " " : "") << std::to_string(alpha.real())
+              << (alpha.imag() >= 0 ? " + " : " - ")
+              << std::to_string(std::abs(alpha.imag())) << "i"
+              << ",\033[94m beta: \033[0m" << (beta.real() >= 0 ? " " : "")
+              << std::to_string(beta.real())
+              << (beta.imag() >= 0 ? " + " : " - ")
+              << std::to_string(std::abs(beta.imag())) << "i ";
+
+    std::cout << "\033[95m squared norms: \033[0m"
+              << std::to_string(std::norm(alpha)) << ket0 << ", "
+              << std::to_string(std::norm(beta)) << ket1 << r << std::endl;
+  }
+}
+
+/*
+ * Prints out a matrix
+ */
+inline void mxout(const ComplexVectMatrix &mat, const std::string &title) {
+  std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
+  for (size_t m = 0; m < mat.row_size(); m++) {
+    for (size_t n = 0; n < mat.column_size(); n++) {
+      std::cout << "(" << std::to_string(mat.get(m, n).real()) << ", "
+                << std::to_string(mat.get(m, n).imag()) << ") ";
+    }
+    std::cout << std::endl;
+  }
+}
+
 inline void run_test(const std::string &title, std::function<bool()> test,
                      int &failed, int &total) {
   std::cout << title << std::string(60 - title.length(), '.');
@@ -111,6 +181,7 @@ inline void run_test(const std::string &title, std::function<bool()> test,
     }
     std::cout << std::endl;
   } catch (const std::exception &e) {
+    failed += 1;
     std::cout << "\033[31m FAILED: " << e.what() << "\033[0m" << std::endl;
   }
   total += 1;

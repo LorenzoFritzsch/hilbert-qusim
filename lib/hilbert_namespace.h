@@ -31,4 +31,11 @@ inline bool approx_equal(const Complex &a, const Complex &b) {
   return std::abs(a - b) < tol;
 }
 
+/*
+ * Calculates the squared norm.
+ */
+inline Complex norm(const Complex &a, const Complex &b) {
+  return static_cast<Complex>(std::norm(a) + std::norm(b));
+}
+
 #endif // !HILBERT_NAMESPACE_H

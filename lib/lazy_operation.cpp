@@ -18,10 +18,9 @@
 #include <memory>
 #include <thread>
 
-void LazyOperation::append(
-    const LazyOperation &lazy_op, op_op op, op_op_row op_row,
-    std::function<size_t(size_t, size_t, size_t, size_t)> row_size,
-    std::function<size_t(size_t, size_t, size_t, size_t)> column_size) {
+void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
+                           op_op_row op_row, const size_t final_row_size,
+                           const size_t final_column_size) {
 
   // Add all elements of lazy_op and operations
   auto sub_op_start_index = op_vect_.size();
@@ -58,20 +57,12 @@ void LazyOperation::append(
     }
     case MatrixOperation:
       // Unused
-      break;
+      throw std::logic_error("MatrixOperation append not implemented.");
     }
   }
 
   // Now, the last op represents the input lazy operation.
   auto sub_op_end_index = sub_op_start_index + lazy_op_operations.size() - 1;
-  auto op_row_size = op_vect_.back().row_size();
-  auto op_column_size = op_vect_.back().column_size();
-  auto lazy_row_size = lazy_op.row_size();
-  auto lazy_column_size = lazy_op.column_size();
-  auto final_row_size =
-      row_size(op_row_size, op_column_size, lazy_row_size, lazy_column_size);
-  auto final_column_size =
-      column_size(op_row_size, op_column_size, lazy_row_size, lazy_column_size);
   op_vect_.emplace_back(sub_op_start_index - 1, sub_op_end_index, mat_vect_,
                         op_vect_, op, op_row, final_row_size,
                         final_column_size);

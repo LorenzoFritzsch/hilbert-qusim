@@ -184,6 +184,7 @@ public:
 
     return std::make_unique<ComplexVectSplit>(result_real, result_imag);
   }
+
 #ifndef __APPLE__
 private:
   /*

@@ -15,6 +15,9 @@
 #ifndef CIRCUIT_ENGINE_H
 #define CIRCUIT_ENGINE_H
 
+#include "complex_vectorised_matrix.h"
+#include "hilbert_namespace.h"
+#include "qubit.h"
 #include "state_vector.h"
 #include <memory.h>
 
@@ -22,9 +25,13 @@ class CircuitEngine {
 public:
   CircuitEngine() = delete;
 
-  static std::unique_ptr<StateVector> qft(const StateVector &j);
+  [[nodiscard]] static std::unique_ptr<StateVector> qft(const StateVector &j);
 
-  static std::unique_ptr<StateVector> inverse_qft(const StateVector &k);
+  [[nodiscard]] static std::unique_ptr<StateVector>
+  inverse_qft(const StateVector &k);
+
+  [[nodiscard]] static __complex_precision
+  qpe(const Qubit &v, const ComplexVectMatrix &u, const int t = 8);
 };
 
 #endif // !CIRCUIT_ENGINE_H

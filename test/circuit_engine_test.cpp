@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "circuit_engine.h"
+#include "gate_engine.h"
 #include "hilbert_namespace_test.h"
 #include "qubit.h"
 #include "state_vector.h"
+#include <numbers>
 #include <vector>
 
 bool it_should_compute_qft() {
@@ -56,6 +58,16 @@ bool it_should_compute_qft_and_inverse() {
   return state == *state_iqft;
 }
 
+bool it_should_compute_qpe() {
+  // Given
+  auto phase = 2 * std::numbers::pi / 5;
+  auto u = GateEngine::phase_shift_gate(phase);
+  auto v = Qubit::ket_1();
+
+  // When
+  CircuitEngine::qpe(*v, *u);
+}
+
 int main() {
   int total = 0;
   int failed = 0;
@@ -64,6 +76,9 @@ int main() {
 
   run_test("it_should_compute_qft_and_inverse",
            it_should_compute_qft_and_inverse, failed, total);
+
+  // TODO: run_test("it_should_compute_qpe", it_should_compute_qpe, failed,
+  // total);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

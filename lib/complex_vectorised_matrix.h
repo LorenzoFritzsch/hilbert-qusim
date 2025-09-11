@@ -19,7 +19,6 @@
 #include "hilbert_namespace.h"
 #include "simd.h"
 #include <cstddef>
-#include <functional>
 #include <memory>
 
 /*
@@ -77,19 +76,6 @@ public:
   }
 
   [[nodiscard]] std::unique_ptr<ComplexVectSplit>
-  get(size_t row_size, std::function<size_t(size_t i)> m_functor,
-      std::function<size_t(size_t i)> n_functor) const {
-    ComplexVectSplit result;
-    for (size_t i = 0; i < row_size; i++) {
-      auto m = m_functor(i);
-      auto n = n_functor(i);
-      auto index = m * column_size_ + n;
-      result.add(vectorised_matrix_.at(index));
-    }
-    return std::make_unique<ComplexVectSplit>(result);
-  }
-
-  [[nodiscard]] std::unique_ptr<ComplexVectSplit>
   get_row(const size_t row) const {
     auto start_index = row * column_size_;
     auto end_index = start_index + column_size_;
@@ -119,13 +105,18 @@ public:
 
   [[nodiscard]] size_t column_size() const { return column_size_; }
 
+  // *** Frequently used matrices and vectors. ***
+
   /*
-   * Frequently used matrices and vectors.
+   * |0> = (1, 0)
    */
   static std::unique_ptr<ComplexVectMatrix> ket_0() {
     return std::make_unique<ComplexVectMatrix>(ComplexVector({1, 0}));
   }
 
+  /*
+   * |1> = (0, 1)
+   */
   static std::unique_ptr<ComplexVectMatrix> ket_1() {
     return std::make_unique<ComplexVectMatrix>(ComplexVector({0, 1}));
   }

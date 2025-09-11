@@ -17,16 +17,17 @@
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
+#include <complex>
 #include <memory>
 #include <stdexcept>
 
 class Qubit final {
 public:
   Qubit(const Complex alpha, const Complex beta) {
-    auto norm = static_cast<Complex>(std::norm(alpha) + std::norm(beta));
-    if (!approx_equal(norm, Complex(1))) {
-      throw std::invalid_argument("Qubit must be normalised (norm = " +
-                                  std::to_string(norm.real()) + ")");
+    auto n = norm(alpha, beta);
+    if (!approx_equal(n, Complex(1))) {
+      throw std::invalid_argument(
+          "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
     this->alpha = alpha;
     this->beta = beta;
@@ -38,10 +39,10 @@ public:
     }
     auto alpha = vect.get(0, 0);
     auto beta = vect.get(0, 1);
-    auto norm = alpha * std::conj(alpha) + beta * std::conj(beta);
-    if (!approx_equal(norm, Complex(1))) {
-      throw std::invalid_argument("Qubit must be normalised (norm = " +
-                                  std::to_string(norm.real()) + ")");
+    auto n = norm(alpha, beta);
+    if (!approx_equal(n, Complex(1))) {
+      throw std::invalid_argument(
+          "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
     this->alpha = alpha;
     this->beta = beta;
@@ -53,10 +54,10 @@ public:
     }
     auto alpha = op.get(0, 0);
     auto beta = op.get(0, 1);
-    auto norm = alpha * std::conj(alpha) + beta * std::conj(beta);
-    if (!approx_equal(norm, Complex(1))) {
-      throw std::invalid_argument("Qubit must be normalised (norm = " +
-                                  std::to_string(norm.real()) + ")");
+    auto n = norm(alpha, beta);
+    if (!approx_equal(n, Complex(1))) {
+      throw std::invalid_argument(
+          "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
     this->alpha = alpha;
     this->beta = beta;
@@ -67,14 +68,31 @@ public:
     this->beta = 0;
   }
 
+  Qubit operator*=(const __complex_precision &c) const {
+    auto new_alpha = alpha * c;
+    auto new_beta = beta * c;
+    auto n = norm(new_alpha, new_beta);
+    return Qubit(new_alpha / n, new_beta / n);
+  }
+
+  [[nodiscard]] static std::unique_ptr<Qubit> ket_0() {
+    return std::make_unique<Qubit>(1, 0);
+  }
+
+  [[nodiscard]] static std::unique_ptr<Qubit> ket_1() {
+    return std::make_unique<Qubit>(0, 1);
+  }
+
   [[nodiscard]] std::unique_ptr<ComplexVectMatrix> to_vector() const {
     return std::make_unique<ComplexVectMatrix>(ComplexVector({alpha, beta}));
   }
 
   /*
    * Even though these methods are quite against basic quantum information
-   * theory concepts, they are rather useful in testing scenarios.
+   * theory concepts, they are rather useful in testing scenarios or to improve
+   * performance.
    */
+
   bool operator==(const Qubit &other) const {
     return approx_equal(alpha, other.alpha) && approx_equal(beta, other.beta);
   }
@@ -82,6 +100,11 @@ public:
   bool operator!=(const Qubit &other) const {
     return !approx_equal(alpha, other.alpha) && approx_equal(beta, other.beta);
   }
+
+  /*
+   * Calculates the relative phase.
+   */
+  __complex_precision rp() { return std::arg(beta) - std::arg(alpha); }
 
 private:
   Complex alpha;
