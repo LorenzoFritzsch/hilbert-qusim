@@ -43,12 +43,11 @@ public:
   matrix_vector_product(const ComplexVectMatrix &mat,
                         const ComplexVectMatrix &vect);
 
-  [[nodiscard]] static std::unique_ptr<LazyOperation>
-  matrix_vector_product(const LazyOperation &mat,
-                        const ComplexVectMatrix &vect);
+  static void matrix_vector_product(LazyOperation &mat,
+                                    const ComplexVectMatrix &vect);
 
-  [[nodiscard]] static std::unique_ptr<LazyOperation>
-  matrix_vector_product(const LazyOperation &mat, const LazyOperation &vect);
+  static void matrix_vector_product(LazyOperation &mat,
+                                    const LazyOperation &vect);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   outer_product(const ComplexVectMatrix &mat_left,
@@ -70,8 +69,8 @@ public:
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   tensor_product(const ComplexVectMatrix &left, const LazyOperation &right);
 
-  [[nodiscard]] static std::unique_ptr<LazyOperation>
-  tensor_product(const LazyOperation &left, const ComplexVectMatrix &right);
+  static void tensor_product(LazyOperation &left,
+                             const ComplexVectMatrix &right);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   tensor_product(const ComplexVectMatrix &mat, const size_t folds);

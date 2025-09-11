@@ -53,10 +53,10 @@ enum OperationType {
  * +------------------------+ +-------------------------+
  * | Left Operand Reference | | Right Operand Reference |
  * +------------------------+ +-------------------------+
- *          \                               /
+ *          \                              /
  *           \                            /
  *           +----------------------------+
- *           |     Operation Functor      |
+ *           |     Operation Function     |
  *           +----------------------------+
  */
 class Operation final {

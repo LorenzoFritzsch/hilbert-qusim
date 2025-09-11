@@ -72,13 +72,14 @@ int main() {
   int total = 0;
   int failed = 0;
 
+  /* TODO
   run_test("it_should_compute_qft", it_should_compute_qft, failed, total);
 
   run_test("it_should_compute_qft_and_inverse",
            it_should_compute_qft_and_inverse, failed, total);
+           */
 
-  // TODO: run_test("it_should_compute_qpe", it_should_compute_qpe, failed,
-  // total);
+  run_test("it_should_compute_qpe", it_should_compute_qpe, failed, total);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

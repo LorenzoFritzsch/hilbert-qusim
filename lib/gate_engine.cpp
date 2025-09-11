@@ -150,10 +150,9 @@ std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
   verify_unitarity(u);
   auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
-  auto controlled_u = make_controlled_u(u);
-  auto transformed_state =
-      AlgebraEngine::matrix_vector_product(*controlled_u, *state);
-  return trout_target(*transformed_state);
+  auto lazy_state = make_controlled_u(u);
+  AlgebraEngine::matrix_vector_product(*lazy_state, *state);
+  return trout_target(*lazy_state);
 }
 
 // TODO: Remove
@@ -171,18 +170,18 @@ GateEngine::controlled_u_stv(const Qubit &target, const Qubit &control,
   auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
 
-  mxout(*state->to_matrix(), "State before controlled-U");
+  auto state_mat = state->to_matrix();
+  mxout(*state_mat, "State before controlled-U");
 
-  auto controlled_u = make_controlled_u(u);
+  auto lazy_state = make_controlled_u(u);
 
-  mxout(*controlled_u->to_matrix(), "Controlled-U");
+  mxout(*lazy_state->to_matrix(), "Controlled-U");
 
-  auto transformed_state =
-      AlgebraEngine::matrix_vector_product(*controlled_u, *state);
+  AlgebraEngine::matrix_vector_product(*lazy_state, *state);
 
-  mxout(*transformed_state->to_matrix(), "State after controlled-U");
+  mxout(*lazy_state->to_matrix(), "State after controlled-U");
 
-  return std::move(transformed_state);
+  return lazy_state;
 }
 
 std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {

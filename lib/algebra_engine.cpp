@@ -437,22 +437,16 @@ AlgebraEngine::matrix_vector_product(const ComplexVectMatrix &mat,
                                          vect.column_size());
 }
 
-std::unique_ptr<LazyOperation>
-AlgebraEngine::matrix_vector_product(const LazyOperation &mat,
-                                     const ComplexVectMatrix &vect) {
-  auto result = std::make_unique<LazyOperation>(mat);
-  result->append(vect, matrix_multiplication_op_mat,
-                 matrix_multiplication_op_mat_row, 1, vect.column_size());
-  return result;
+void AlgebraEngine::matrix_vector_product(LazyOperation &mat,
+                                          const ComplexVectMatrix &vect) {
+  mat.append(vect, matrix_multiplication_op_mat,
+             matrix_multiplication_op_mat_row, 1, vect.column_size());
 }
 
-std::unique_ptr<LazyOperation>
-AlgebraEngine::matrix_vector_product(const LazyOperation &mat,
-                                     const LazyOperation &vect) {
-  auto result = std::make_unique<LazyOperation>(mat);
-  result->append(vect, matrix_vector_mul_op_op, matrix_vector_mul_op_op_row, 1,
-                 vect.column_size());
-  return result;
+void AlgebraEngine::matrix_vector_product(LazyOperation &mat,
+                                          const LazyOperation &vect) {
+  mat.append(vect, matrix_multiplication_op_op, matrix_multiplication_op_op_row,
+             1, vect.column_size());
 }
 
 std::unique_ptr<LazyOperation>
@@ -516,14 +510,11 @@ AlgebraEngine::tensor_product(const ComplexVectMatrix &mat_left,
       mat_left.column_size() * op_right.column_size());
 }
 
-std::unique_ptr<LazyOperation>
-AlgebraEngine::tensor_product(const LazyOperation &left,
-                              const ComplexVectMatrix &right) {
-  auto result = std::make_unique<LazyOperation>(left);
-  result->append(right, tensor_product_op_mat, tensor_product_op_mat_row,
-                 left.row_size() * right.row_size(),
-                 left.column_size() * right.column_size());
-  return result;
+void AlgebraEngine::tensor_product(LazyOperation &left,
+                                   const ComplexVectMatrix &right) {
+  left.append(right, tensor_product_op_mat, tensor_product_op_mat_row,
+              left.row_size() * right.row_size(),
+              left.column_size() * right.column_size());
 }
 
 std::unique_ptr<LazyOperation>

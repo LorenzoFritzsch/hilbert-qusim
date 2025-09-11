@@ -59,6 +59,10 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
+  // Underlaying `Operation` cannot be moved.
+  LazyOperation(const LazyOperation &) = delete;
+  LazyOperation &operator=(const LazyOperation &) = delete;
+
   LazyOperation(const ComplexVectMatrix &left, const ComplexVectMatrix &right,
                 mat_mat op, mat_mat_row op_row, const size_t final_row_size,
                 const size_t final_column_size) {
@@ -100,11 +104,9 @@ public:
   void append(const ComplexVectMatrix &mat, op_mat op, op_mat_row op_row,
               const size_t final_row_size, const size_t final_column_size) {
     mat_vect_.push_back(mat);
-    auto op_index = op_vect_.size() - 1;
-    auto mat_index = mat_vect_.size() - 1;
-    op_vect_.emplace_back(op_index, mat_index, mat_vect_, op_vect_,
-                          std::move(op), std::move(op_row), final_row_size,
-                          final_column_size);
+    op_vect_.emplace_back(op_vect_.size() - 1, mat_vect_.size() - 1, mat_vect_,
+                          op_vect_, std::move(op), std::move(op_row),
+                          final_row_size, final_column_size);
   }
 
   void append(const LazyOperation &lazy_op, op_op op, op_op_row op_row,
@@ -167,7 +169,8 @@ private:
 
   LazyOperation(mat_mat op, mat_mat_row op_row, const size_t row_size,
                 const size_t col_size) {
-    op_vect_.emplace_back(-1, -1, mat_vect_, op_vect_, std::move(op),
+    mat_vect_.push_back(*ComplexVectMatrix::identity_2x2());
+    op_vect_.emplace_back(0, 0, mat_vect_, op_vect_, std::move(op),
                           std::move(op_row), row_size, col_size);
   }
 };

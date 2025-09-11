@@ -55,8 +55,7 @@ public:
     auto lazy = AlgebraEngine::tensor_product(*state_vector_[0].to_vector(),
                                               *state_vector_[1].to_vector());
     for (size_t i = 2; i < state_vector_.size(); i++) {
-      lazy =
-          AlgebraEngine::tensor_product(*lazy, *state_vector_[i].to_vector());
+      AlgebraEngine::tensor_product(*lazy, *state_vector_[i].to_vector());
     }
     return lazy;
   }
