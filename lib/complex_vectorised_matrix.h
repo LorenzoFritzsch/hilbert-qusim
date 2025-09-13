@@ -18,8 +18,11 @@
 #include "complex_vector_split.h"
 #include "hilbert_namespace.h"
 #include "simd.h"
+#include <cmath>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 /*
  * This class represents a matrix in a vectorised form, in order to have all the
@@ -63,8 +66,8 @@ public:
       return false;
     }
 
-    auto diff = simd::cvsub(ComplexVectSplit(vectorised_matrix_),
-                            ComplexVectSplit(other.vectorised_matrix_));
+    const auto diff = simd::cvsub(ComplexVectSplit(vectorised_matrix_),
+                                  ComplexVectSplit(other.vectorised_matrix_));
     if (!approx_equal(simd::cvsve(*diff), Complex(0, 0))) {
       return false;
     }
@@ -72,11 +75,18 @@ public:
   }
 
   [[nodiscard]] Complex get(const size_t m, const size_t n) const {
+    if (m >= row_size_ || n >= column_size_) {
+      throw std::out_of_range("Indexes (" + std::to_string(m) + ", " +
+                              std::to_string(n) + ") out of range");
+    }
     return vectorised_matrix_.at(m * column_size_ + n);
   }
 
   [[nodiscard]] std::unique_ptr<ComplexVectSplit>
   get_row(const size_t row) const {
+    if (row >= row_size_) {
+      throw std::out_of_range("Row " + std::to_string(row) + " out of range");
+    }
     auto start_index = row * column_size_;
     auto end_index = start_index + column_size_;
     return std::make_unique<ComplexVectSplit>(
@@ -86,6 +96,10 @@ public:
 
   [[nodiscard]] std::unique_ptr<ComplexVectSplit>
   get_column(const size_t column) const {
+    if (column >= column_size_) {
+      throw std::out_of_range("Column " + std::to_string(column) +
+                              " out of range");
+    }
     ComplexVectSplit result;
     for (size_t m = 0; m < row_size_; m++) {
       result.add(vectorised_matrix_[m * column_size_ + column]);
@@ -119,6 +133,22 @@ public:
    */
   static std::unique_ptr<ComplexVectMatrix> ket_1() {
     return std::make_unique<ComplexVectMatrix>(ComplexVector({0, 1}));
+  }
+
+  /*
+   * |+> = 1/sqrt2(1, 1)
+   */
+  static std::unique_ptr<ComplexVectMatrix> ket_p() {
+    const auto k = static_cast<__complex_precision>(1 / std::sqrt(2));
+    return std::make_unique<ComplexVectMatrix>(ComplexVector({k, k}));
+  }
+
+  /*
+   * |-> = 1/sqrt2(1, -1)
+   */
+  static std::unique_ptr<ComplexVectMatrix> ket_m() {
+    const auto k = static_cast<__complex_precision>(1 / std::sqrt(2));
+    return std::make_unique<ComplexVectMatrix>(ComplexVector({k, -k}));
   }
 
   static std::unique_ptr<ComplexVectMatrix> identity_2x2() {

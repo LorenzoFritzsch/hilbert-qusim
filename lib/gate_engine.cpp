@@ -24,10 +24,11 @@
 #include <string>
 
 std::unique_ptr<LazyOperation> make_controlled_u(const ComplexVectMatrix &u) {
-  auto proj_i = ComplexVectMatrix(
+  const auto proj_i = ComplexVectMatrix(
       ComplexMatrix{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}});
-  auto ket_1_density_mat = ComplexVectMatrix(ComplexMatrix{{0, 0}, {0, 1}});
-  auto proj_u = AlgebraEngine::tensor_product(ket_1_density_mat, u);
+  const auto ket_1_density_mat =
+      ComplexVectMatrix(ComplexMatrix{{0, 0}, {0, 1}});
+  const auto proj_u = AlgebraEngine::tensor_product(ket_1_density_mat, u);
   return AlgebraEngine::sum(proj_i, *proj_u);
 }
 
@@ -148,10 +149,10 @@ std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
                                                 const ComplexVectMatrix &u) {
   verify_sqmatrix(u, 2);
   verify_unitarity(u);
-  auto state =
+  const auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
   auto lazy_state = make_controlled_u(u);
-  AlgebraEngine::matrix_vector_product(*lazy_state, *state);
+  AlgebraEngine::matrix_vector_product(lazy_state, *state);
   return trout_target(*lazy_state);
 }
 
@@ -163,25 +164,11 @@ GateEngine::controlled_u_stv(const Qubit &target, const Qubit &control,
                              const ComplexVectMatrix &u) {
   verify_sqmatrix(u, 2);
   verify_unitarity(u);
-
-  mxout(*target.to_vector(), "Target before controlled-U");
-  mxout(*control.to_vector(), "Control before controlled-U");
-
-  auto state =
+  const auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
-
-  auto state_mat = state->to_matrix();
-  mxout(*state_mat, "State before controlled-U");
-
-  auto lazy_state = make_controlled_u(u);
-
-  mxout(*lazy_state->to_matrix(), "Controlled-U");
-
-  AlgebraEngine::matrix_vector_product(*lazy_state, *state);
-
-  mxout(*lazy_state->to_matrix(), "State after controlled-U");
-
-  return lazy_state;
+  auto controlled_u = make_controlled_u(u);
+  AlgebraEngine::matrix_vector_product(controlled_u, *state);
+  return controlled_u;
 }
 
 std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {

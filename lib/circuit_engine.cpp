@@ -68,7 +68,7 @@ CircuitEngine::qpe(const Qubit &v, const ComplexVectMatrix &u, const int t) {
     auto u_k = *AlgebraEngine::matrix_exp(u, 1 << i)->to_matrix();
     mxout(u_k, "U" + std::to_string(i));
     auto state = GateEngine::controlled_u_stv(v, control, u_k);
-    mxout(*state->to_matrix(), "State after Uk");
+    mxout(*state->to_matrix(), "State after U" + std::to_string(i));
     r1[i] = *GateEngine::trout_control(*state);
   }
   svout(r1, "State before iQFT");

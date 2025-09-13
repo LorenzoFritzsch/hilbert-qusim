@@ -43,10 +43,10 @@ public:
   matrix_vector_product(const ComplexVectMatrix &mat,
                         const ComplexVectMatrix &vect);
 
-  static void matrix_vector_product(LazyOperation &mat,
+  static void matrix_vector_product(std::unique_ptr<LazyOperation> &mat,
                                     const ComplexVectMatrix &vect);
 
-  static void matrix_vector_product(LazyOperation &mat,
+  static void matrix_vector_product(std::unique_ptr<LazyOperation> &mat,
                                     const LazyOperation &vect);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
@@ -69,7 +69,11 @@ public:
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   tensor_product(const ComplexVectMatrix &left, const LazyOperation &right);
 
-  static void tensor_product(LazyOperation &left,
+  /*
+   * Calculates the tensor product between the two input vectors, adding a
+   * `Operation` to the `LazyOperation`.
+   */
+  static void tensor_product(std::unique_ptr<LazyOperation> &left,
                              const ComplexVectMatrix &right);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>

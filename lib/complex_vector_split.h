@@ -50,13 +50,9 @@ public:
     }
   }
 
-  [[nodiscard]] std::unique_ptr<std::vector<__complex_precision>> real() const {
-    return std::make_unique<std::vector<__complex_precision>>(real_);
-  }
+  [[nodiscard]] std::vector<__complex_precision> real() const { return real_; }
 
-  [[nodiscard]] std::unique_ptr<std::vector<__complex_precision>> imag() const {
-    return std::make_unique<std::vector<__complex_precision>>(imag_);
-  }
+  [[nodiscard]] std::vector<__complex_precision> imag() const { return imag_; }
 
   [[nodiscard]] Complex get(const size_t i) const {
     return Complex(real_[i], imag_[i]);
@@ -75,6 +71,12 @@ public:
   void add(const Complex c) {
     real_.emplace_back(c.real());
     imag_.emplace_back(c.imag());
+  }
+
+  void insert(const std::vector<__complex_precision> reals,
+              const std::vector<__complex_precision> imags) {
+    real_.insert(real_.end(), reals.begin(), reals.end());
+    imag_.insert(imag_.end(), imags.begin(), imags.end());
   }
 
   std::unique_ptr<ComplexVectSplit> conj() {

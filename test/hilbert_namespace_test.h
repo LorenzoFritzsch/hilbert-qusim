@@ -34,70 +34,6 @@ inline std::string mussec(unsigned long long delta_mus) {
   return std::to_string(delta_sec);
 }
 
-class PerfTest {
-public:
-  explicit PerfTest(const std::string title)
-      : title_(title), start_(std::chrono::high_resolution_clock::now()) {}
-
-  ~PerfTest() {
-    const auto end = std::chrono::high_resolution_clock::now();
-    const auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start_);
-    const auto duration_seconds = mussec(duration.count());
-    std::cout << std::endl
-              << "** Elapsed time " << title_ << ": \033[1m" << duration_seconds
-              << " seconds\033[0m";
-  }
-
-private:
-  const std::string title_;
-  const std::chrono::high_resolution_clock::time_point start_;
-};
-
-inline void print_info(const std::string info) {
-#ifdef PERFORMANCE_TESTING
-  std::cout << std::endl << "-> " << info;
-#endif
-}
-
-inline PerfTest *pt_start(const std::string title) {
-#ifdef PERFORMANCE_TESTING
-  return new PerfTest(title);
-#else
-  return nullptr;
-#endif
-}
-
-inline void pt_stop(PerfTest *pt) {
-  if (pt != nullptr) {
-    delete pt;
-  }
-}
-
-inline bool are_matrices_equal(const ComplexVectMatrix &left,
-                               const LazyOperation &right) {
-  return left == *right.to_matrix();
-}
-
-inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
-                                   size_t expected_size) {
-  if (matrix.row_size() != matrix.column_size() ||
-      matrix.row_size() != expected_size) {
-    return false;
-  }
-
-  for (size_t m = 0; m < matrix.row_size(); m++) {
-    if (!approx_equal(matrix.get(m, m), Complex(1, 0))) {
-      return false;
-    }
-    auto row = matrix.get_row(m);
-    if (!approx_equal(simd::cvsve(*row), Complex(1, 0))) {
-      return false;
-    }
-  }
-  return true;
-}
-
 /*
  * Prints out a state vector.
  */
@@ -163,6 +99,83 @@ inline void mxout(const ComplexVectMatrix &mat, const std::string &title) {
     }
     std::cout << std::endl;
   }
+}
+
+/*
+ * Prints out a lazy opration
+ */
+inline void loout(const LazyOperation &mat, const std::string &title) {
+  std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
+  for (size_t m = 0; m < mat.row_size(); m++) {
+    for (size_t n = 0; n < mat.column_size(); n++) {
+      std::cout << "(" << std::to_string(mat.get(m, n).real()) << ", "
+                << std::to_string(mat.get(m, n).imag()) << ") ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+class PerfTest {
+public:
+  explicit PerfTest(const std::string title)
+      : title_(title), start_(std::chrono::high_resolution_clock::now()) {}
+
+  ~PerfTest() {
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start_);
+    const auto duration_seconds = mussec(duration.count());
+    std::cout << std::endl
+              << "** Elapsed time " << title_ << ": \033[1m" << duration_seconds
+              << " seconds\033[0m";
+  }
+
+private:
+  const std::string title_;
+  const std::chrono::high_resolution_clock::time_point start_;
+};
+
+inline void print_info(const std::string info) {
+#ifdef PERFORMANCE_TESTING
+  std::cout << std::endl << "-> " << info;
+#endif
+}
+
+inline PerfTest *pt_start(const std::string title) {
+#ifdef PERFORMANCE_TESTING
+  return new PerfTest(title);
+#else
+  return nullptr;
+#endif
+}
+
+inline void pt_stop(PerfTest *pt) {
+  if (pt != nullptr) {
+    delete pt;
+  }
+}
+
+inline bool are_matrices_equal(const ComplexVectMatrix &left,
+                               const LazyOperation &right) {
+  return left == *right.to_matrix();
+}
+
+inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
+                                   size_t expected_size) {
+  if (matrix.row_size() != matrix.column_size() ||
+      matrix.row_size() != expected_size) {
+    return false;
+  }
+
+  for (size_t m = 0; m < matrix.row_size(); m++) {
+    if (!approx_equal(matrix.get(m, m), Complex(1, 0))) {
+      return false;
+    }
+    if (!approx_equal(simd::cvsve(*matrix.get_row(m)), Complex(1, 0))) {
+      return false;
+    }
+  }
+  return true;
 }
 
 inline void run_test(const std::string &title, std::function<bool()> test,

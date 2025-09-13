@@ -49,8 +49,8 @@ bool it_should_split_vect_matrix() {
   // Then
   std::vector<__complex_precision> real_exp = {0, 0, 0, 0};
   std::vector<__complex_precision> imag_exp = {0, -1, 1, 0};
-  auto real_act = *mat_split->real();
-  auto imag_act = *mat_split->imag();
+  auto real_act = mat_split->real();
+  auto imag_act = mat_split->imag();
   return real_exp == real_act && imag_exp == imag_act;
 }
 

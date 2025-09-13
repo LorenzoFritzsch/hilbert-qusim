@@ -19,7 +19,7 @@
 
 bool it_should_compute_conjugate_transpose() {
   // Given
-  auto complex_mat = std::make_unique<ComplexVectMatrix>(
+  const auto complex_mat = std::make_unique<ComplexVectMatrix>(
       ComplexMatrix({{{1, 1}, {1, 2}}, {{2, 1}, {2, 2}}}));
 
   // When
@@ -71,7 +71,7 @@ bool it_should_compute_outer_product() {
   return are_matrices_equal(ComplexVectMatrix(expected), *result);
 }
 
-bool it_should_compute_matrix_vector_product() {
+bool it_should_compute_matrix_vector_product_mm() {
   // Given
   auto mat = ComplexVectMatrix::pauli_x();
   auto vect = ComplexVectMatrix::ket_0();
@@ -82,6 +82,32 @@ bool it_should_compute_matrix_vector_product() {
   // Then
   const auto expected = ComplexVectMatrix::ket_1();
   return are_matrices_equal(*expected, *result);
+}
+
+bool it_should_compute_matrix_vector_product_om() {
+  // Given
+  auto mat = std::make_unique<LazyOperation>(*ComplexVectMatrix::pauli_x());
+  auto vect = ComplexVectMatrix::ket_0();
+
+  // When
+  AlgebraEngine::matrix_vector_product(mat, *vect);
+
+  // Then
+  const auto expected = ComplexVectMatrix::ket_1();
+  return are_matrices_equal(*expected, *mat);
+}
+
+bool it_should_compute_matrix_vector_product_oo() {
+  // Given
+  auto mat = std::make_unique<LazyOperation>(*ComplexVectMatrix::pauli_x());
+  auto vect = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_0());
+
+  // When
+  AlgebraEngine::matrix_vector_product(mat, *vect);
+
+  // Then
+  const auto expected = ComplexVectMatrix::ket_1();
+  return are_matrices_equal(*expected, *mat);
 }
 
 bool it_should_compute_matrix_exponentiation() {
@@ -160,10 +186,59 @@ bool it_should_compute_tensor_product() {
                             *result);
 }
 
+bool it_should_compute_vv_tensor_product_mm() {
+  // Given
+  const auto a = ComplexVectMatrix::ket_p();
+  const auto b = ComplexVectMatrix::ket_1();
+
+  // When
+  const auto result = AlgebraEngine::tensor_product(*a, *b);
+
+  // Then
+  const auto k = 1 / std::sqrt(2);
+  const ComplexMatrix expected = {{0, k, 0, k}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_vv_tensor_product_mo() {
+  // Given
+  const auto a = ComplexVectMatrix::ket_p();
+  const auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_1());
+
+  // When
+  const auto result = AlgebraEngine::tensor_product(*a, *b);
+
+  // Then
+  const auto k = 1 / std::sqrt(2);
+  const ComplexMatrix expected = {{0, k, 0, k}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_vv_tensor_product_om() {
+  // Given
+  auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_p());
+  auto b = ComplexVectMatrix::ket_1();
+
+  // When
+  AlgebraEngine::tensor_product(a, *b);
+
+  // Then
+  const auto k = 1 / std::sqrt(2);
+  const ComplexMatrix expected = {{0, k, 0, k}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+}
+
 bool it_should_compute_n_fold_tensor_product() {
   // Given
   auto a = ComplexVectMatrix::identity_2x2();
+
+#ifdef PERFORMANCE_TESTING
+  constexpr auto times = 12;
+#else
   constexpr auto times = 8;
+#endif
 
   // When
   auto perf_test_setup =
@@ -209,6 +284,18 @@ int main() {
   run_test("it_should_compute_tensor_product", it_should_compute_tensor_product,
            failed, total, true);
 
+  run_test("it_should_compute_vv_tensor_product_mm",
+           it_should_compute_vv_tensor_product_mm, failed, total, true);
+
+  run_test("it_should_compute_vv_tensor_product_mo",
+           it_should_compute_vv_tensor_product_mo, failed, total, true);
+
+  run_test("it_should_compute_vv_tensor_product_om",
+           it_should_compute_vv_tensor_product_om, failed, total, true);
+
+  run_test("it_should_compute_n_fold_tensor_product",
+           it_should_compute_n_fold_tensor_product, failed, total, false);
+
   run_test("it_should_compute_scalar_product", it_should_compute_scalar_product,
            failed, total, true);
 
@@ -220,17 +307,20 @@ int main() {
   run_test("it_should_compute_outer_product", it_should_compute_outer_product,
            failed, total, true);
 
-  run_test("it_should_compute_matrix_vector_product",
-           it_should_compute_matrix_vector_product, failed, total, true);
+  run_test("it_should_compute_matrix_vector_product_mm",
+           it_should_compute_matrix_vector_product_mm, failed, total, true);
+
+  run_test("it_should_compute_matrix_vector_product_om",
+           it_should_compute_matrix_vector_product_om, failed, total, true);
+
+  run_test("it_should_compute_matrix_vector_product_oo",
+           it_should_compute_matrix_vector_product_oo, failed, total, true);
 
   run_test("it_should_compute_matrix_exponentiation",
            it_should_compute_matrix_exponentiation, failed, total, true);
 
   run_test("it_should_verify_unitarity", it_should_verify_unitarity, failed,
            total, false);
-
-  run_test("it_should_compute_n_fold_tensor_product",
-           it_should_compute_n_fold_tensor_product, failed, total, false);
 
   test_resumen(failed, total);
   return failed == 0 ? 0 : 1;

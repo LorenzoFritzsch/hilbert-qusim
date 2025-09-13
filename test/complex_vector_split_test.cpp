@@ -25,8 +25,8 @@ bool it_should_create_cvs_from_complex_vector() {
   // Then
   std::vector<__complex_precision> real_exp = {0, 0, 1, 1};
   std::vector<__complex_precision> imag_exp = {0, 1, 0, 1};
-  auto real_act = *cvs.real();
-  auto imag_act = *cvs.imag();
+  auto real_act = cvs.real();
+  auto imag_act = cvs.imag();
 
   return real_exp == real_act && imag_exp == imag_act;
 }
@@ -40,8 +40,8 @@ bool it_should_create_cvs_from_split_vectors() {
   auto cvs = ComplexVectSplit(real, imag);
 
   // Then
-  auto real_act = *cvs.real();
-  auto imag_act = *cvs.imag();
+  auto real_act = cvs.real();
+  auto imag_act = cvs.imag();
   return real == real_act && imag == imag_act;
 }
 

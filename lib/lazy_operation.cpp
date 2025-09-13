@@ -69,28 +69,37 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
 }
 
 std::unique_ptr<ComplexVectMatrix> LazyOperation::to_matrix() const {
-  const auto num_threads = std::thread::hardware_concurrency();
-  const auto rows_per_thread =
-      static_cast<int>(std::ceil(static_cast<float>(row_size()) / num_threads));
-  auto threads = std::vector<std::thread>(num_threads);
 
-  auto result = ComplexVector(row_size() * column_size());
-  auto total_rows = row_size();
-  for (size_t t = 0; t < num_threads; t++) {
-    size_t start_row = t * rows_per_thread;
-    size_t end_row = std::min(start_row + rows_per_thread, total_rows);
+  const auto available_threads = std::thread::hardware_concurrency();
+  const auto total_rows = row_size();
+  const auto total_cols = column_size();
 
-    threads[t] = std::thread([&result, start_row, end_row, total_rows, this] {
-      for (size_t n = start_row; n < end_row; n++) {
-        auto res = get(n)->get();
-        std::copy(res->begin(), res->end(), result.begin() + (n * total_rows));
-      }
-    });
+  // Calculate how many threads to spin up based on the number of rows.
+  auto threads_count = available_threads;
+  if (total_rows % available_threads == total_rows) {
+    threads_count = total_rows;
+  }
+  auto rows_per_thread = static_cast<int>(
+      std::ceil(static_cast<float>(total_rows)) / threads_count);
+
+  auto threads = std::vector<std::thread>(threads_count);
+  auto result = ComplexVector(total_rows * total_cols);
+  for (size_t t = 0; t < threads_count; t++) {
+    const size_t start_row = t * rows_per_thread;
+    size_t row_end_index = start_row + rows_per_thread - 1;
+    threads[t] =
+        std::thread([&result, start_row, row_end_index, total_rows, this] {
+          for (size_t row = start_row; row <= row_end_index; row++) {
+            auto res = get(row)->get();
+            std::copy(res->begin(), res->end(),
+                      result.begin() + (row * total_rows));
+          }
+        });
   }
   for (auto &t : threads) {
     if (t.joinable())
       t.join();
   }
 
-  return std::make_unique<ComplexVectMatrix>(result, row_size(), column_size());
+  return std::make_unique<ComplexVectMatrix>(result, total_rows, total_cols);
 }
