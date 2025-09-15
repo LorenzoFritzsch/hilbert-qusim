@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "algebra_engine.h"
 #include "complex_vectorised_matrix.h"
 #include "gate_engine.h"
 #include "hilbert_namespace_test.h"
@@ -42,6 +43,25 @@ bool it_should_apply_controlled_gate() {
   return *ComplexVectMatrix::ket_1() == *result->to_vector();
 }
 
+bool it_should_apply_control_gate_bipartite_state() {
+  // Given
+  auto control = AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_1(),
+                                               *ComplexVectMatrix::ket_p());
+  auto target = AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_0(),
+                                              *ComplexVectMatrix::ket_m());
+  auto gate = ComplexVectMatrix::pauli_x();
+
+  // When
+  auto result =
+      GateEngine::controlled_u(std::move(control), std::move(target), *gate);
+
+  loout_reals(*result, "State after controlled-U");
+
+  // Then
+  print("Dimension of the returned CNOT state: " +
+        std::to_string(result->column_size()));
+}
+
 bool it_should_apply_hadamard() {
   // Given
   auto qubit = std::make_unique<Qubit>(1, 0);
@@ -63,6 +83,9 @@ int main() {
 
   run_test("it_should_apply_controlled_gate", it_should_apply_controlled_gate,
            failed, total);
+
+  run_test("it_should_apply_control_gate_bipartite_state",
+           it_should_apply_control_gate_bipartite_state, failed, total);
 
   run_test("it_should_apply_hadamard", it_should_apply_hadamard, failed, total);
 

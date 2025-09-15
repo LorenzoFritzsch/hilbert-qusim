@@ -177,6 +177,21 @@ public:
         ComplexMatrix({{1, 0}, {0, -1}}));
   }
 
+  /*
+   * Returns the projection |0><0|I, where I is a 2x2 identity matrix.
+   */
+  static std::unique_ptr<ComplexVectMatrix> proj_0_i() {
+    return std::make_unique<ComplexVectMatrix>(
+        ComplexMatrix{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}});
+  }
+
+  /*
+   * Returns the density matrix |1><1|.
+   */
+  static std::unique_ptr<ComplexVectMatrix> ket_1_dm() {
+    return std::make_unique<ComplexVectMatrix>(ComplexMatrix{{0, 0}, {0, 1}});
+  }
+
 private:
   const size_t row_size_;
   const size_t column_size_;

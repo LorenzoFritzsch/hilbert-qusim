@@ -23,13 +23,11 @@
 #include <stdexcept>
 #include <string>
 
-std::unique_ptr<LazyOperation> make_controlled_u(const ComplexVectMatrix &u) {
-  const auto proj_i = ComplexVectMatrix(
-      ComplexMatrix{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}});
-  const auto ket_1_density_mat =
-      ComplexVectMatrix(ComplexMatrix{{0, 0}, {0, 1}});
-  const auto proj_u = AlgebraEngine::tensor_product(ket_1_density_mat, u);
-  return AlgebraEngine::sum(proj_i, *proj_u);
+inline std::unique_ptr<LazyOperation>
+make_controlled_u(const ComplexVectMatrix &u) {
+  return AlgebraEngine::sum(
+      *ComplexVectMatrix::proj_0_i(),
+      *AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_1_dm(), u));
 }
 
 std::unique_ptr<ComplexVectMatrix>
@@ -144,6 +142,32 @@ GateEngine::apply_gate(const ComplexVectMatrix &gate,
   return AlgebraEngine::matrix_vector_product(gate, state);
 }
 
+#include "../test/hilbert_namespace_test.h" // TODO: REMOVE!
+
+std::unique_ptr<LazyOperation>
+GateEngine::controlled_u(std::unique_ptr<LazyOperation> control,
+                         std::unique_ptr<LazyOperation> target,
+                         const ComplexVectMatrix &u) {
+  verify_sqmatrix(u, 2);
+  verify_unitarity(u);
+  verify_vector(*control, 4);
+  verify_vector(*target, 4);
+  auto r = make_controlled_u(u);
+  auto state = std::move(control);
+  AlgebraEngine::tensor_product(r, *LazyOperation::identity(4));
+  AlgebraEngine::tensor_product(state, *target);
+
+  print("State dimension: " + std::to_string(state->column_size()));
+  print("Controlled-U dimensions: " + std::to_string(r->row_size()) + ", " +
+        std::to_string(r->column_size()));
+
+  loout_reals(*state, "State before controlled-U");
+  loout_int(*r, "Controlled-U gate");
+
+  AlgebraEngine::matrix_vector_product(r, *state);
+  return r;
+}
+
 std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
                                                 const Qubit &control,
                                                 const ComplexVectMatrix &u) {
@@ -155,9 +179,6 @@ std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
   AlgebraEngine::matrix_vector_product(lazy_state, *state);
   return trout_target(*lazy_state);
 }
-
-// TODO: Remove
-#include "../test/hilbert_namespace_test.h"
 
 std::unique_ptr<LazyOperation>
 GateEngine::controlled_u_stv(const Qubit &target, const Qubit &control,

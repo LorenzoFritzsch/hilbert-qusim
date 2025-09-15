@@ -540,6 +540,19 @@ void AlgebraEngine::tensor_product(std::unique_ptr<LazyOperation> &left,
   }
 }
 
+void AlgebraEngine::tensor_product(std::unique_ptr<LazyOperation> &left,
+                                   const LazyOperation &right) {
+  if (left->row_size() != 1 || right.row_size() != 1) {
+    left->append(right, tensor_product_op_op, tensor_product_op_op_row,
+                 left->row_size() * right.row_size(),
+                 left->column_size() * right.column_size());
+  } else {
+    left->append(right, tensor_product_op_op, vv_tensor_product_op_op_row,
+                 left->row_size() * right.row_size(),
+                 left->column_size() * right.column_size());
+  }
+}
+
 std::unique_ptr<LazyOperation>
 AlgebraEngine::tensor_product(const ComplexVectMatrix &mat,
                               const size_t folds) {

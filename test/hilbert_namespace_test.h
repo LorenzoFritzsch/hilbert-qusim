@@ -88,6 +88,13 @@ inline void svout(const StateVector &v, const std::string &title) {
 }
 
 /*
+ * Prints out a string
+ */
+inline void print(const std::string &msg) {
+  std::cout << std::endl << msg << std::endl;
+}
+
+/*
  * Prints out a matrix
  */
 inline void mxout(const ComplexVectMatrix &mat, const std::string &title) {
@@ -110,6 +117,32 @@ inline void loout(const LazyOperation &mat, const std::string &title) {
     for (size_t n = 0; n < mat.column_size(); n++) {
       std::cout << "(" << std::to_string(mat.get(m, n).real()) << ", "
                 << std::to_string(mat.get(m, n).imag()) << ") ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+/*
+ * Prints out a lazy matrix casting all reals to int
+ */
+inline void loout_int(const LazyOperation &mat, const std::string &title) {
+  std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
+  for (size_t m = 0; m < mat.row_size(); m++) {
+    for (size_t n = 0; n < mat.column_size(); n++) {
+      std::cout << std::to_string((int)mat.get(m, n).real()) << "  ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+/*
+ * Prints out a lazy matrix's reals
+ */
+inline void loout_reals(const LazyOperation &mat, const std::string &title) {
+  std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
+  for (size_t m = 0; m < mat.row_size(); m++) {
+    for (size_t n = 0; n < mat.column_size(); n++) {
+      std::cout << std::to_string(mat.get(m, n).real()) << "  ";
     }
     std::cout << std::endl;
   }

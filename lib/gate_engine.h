@@ -54,6 +54,18 @@ public:
                const ComplexVectMatrix &u);
 
   /*
+   * Given the input states |control> and |target>, both bipartite states,
+   * applies a controlled-U gate on the first qubits, and returns the resulting
+   * state vector.
+   * As the input states have both dimensions 4, the output will be a
+   * 16-dimensional state vector.
+   */
+  [[nodiscard]] static std::unique_ptr<LazyOperation>
+  controlled_u(std::unique_ptr<LazyOperation> control,
+               std::unique_ptr<LazyOperation> target,
+               const ComplexVectMatrix &u);
+
+  /*
    * Applies a controlled-U gate and returns the resulting |control, target>
    * 4-dimensional state vector.
    */

@@ -76,6 +76,13 @@ public:
   static void tensor_product(std::unique_ptr<LazyOperation> &left,
                              const ComplexVectMatrix &right);
 
+  /*
+   * Calculates the tensor product between the two input vectors, adding a
+   * `Operation` to the `LazyOperation`.
+   */
+  static void tensor_product(std::unique_ptr<LazyOperation> &left,
+                             const LazyOperation &right);
+
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   tensor_product(const ComplexVectMatrix &mat, const size_t folds);
 

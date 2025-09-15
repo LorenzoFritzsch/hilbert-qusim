@@ -54,6 +54,7 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
                             std::get<op_op>(operation.op_functor()),
                             std::get<op_op_row>(operation.op_row_functor()),
                             operation.row_size(), operation.column_size());
+      break;
     }
     case MatrixOperation:
       // Unused

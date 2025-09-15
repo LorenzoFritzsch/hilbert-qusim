@@ -166,7 +166,7 @@ bool it_should_compute_sum() {
                             *result);
 }
 
-bool it_should_compute_tensor_product() {
+bool it_should_compute_tensor_product_mm() {
   // Given
   auto a = ComplexVectMatrix::hadamard_2x2();
   auto b = ComplexVectMatrix::identity_2x2();
@@ -184,6 +184,64 @@ bool it_should_compute_tensor_product() {
 
   return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
                             *result);
+}
+
+bool it_should_compute_tensor_product_mo() {
+  // Given
+  auto a = ComplexVectMatrix::hadamard_2x2();
+  auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::identity_2x2());
+
+  // When
+  const auto result = AlgebraEngine::tensor_product(*a, *b);
+
+  // Then
+  const ComplexMatrix expected = {
+      {1 / std::sqrt(2), 0, 1 / std::sqrt(2), 0},
+      {0, 1 / std::sqrt(2), 0, 1 / std::sqrt(2)},
+      {1 / std::sqrt(2), 0, -1 / std::sqrt(2), -0},
+      {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
+  };
+
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
+}
+
+bool it_should_compute_tensor_product_om() {
+  // Given
+  auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::hadamard_2x2());
+  auto b = ComplexVectMatrix::identity_2x2();
+
+  // When
+  AlgebraEngine::tensor_product(a, *b);
+
+  // Then
+  const ComplexMatrix expected = {
+      {1 / std::sqrt(2), 0, 1 / std::sqrt(2), 0},
+      {0, 1 / std::sqrt(2), 0, 1 / std::sqrt(2)},
+      {1 / std::sqrt(2), 0, -1 / std::sqrt(2), -0},
+      {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
+  };
+
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+}
+
+bool it_should_compute_tensor_product_oo() {
+  // Given
+  auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::hadamard_2x2());
+  auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::identity_2x2());
+
+  // When
+  AlgebraEngine::tensor_product(a, *b);
+
+  // Then
+  const ComplexMatrix expected = {
+      {1 / std::sqrt(2), 0, 1 / std::sqrt(2), 0},
+      {0, 1 / std::sqrt(2), 0, 1 / std::sqrt(2)},
+      {1 / std::sqrt(2), 0, -1 / std::sqrt(2), -0},
+      {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
+  };
+
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
 }
 
 bool it_should_compute_vv_tensor_product_mm() {
@@ -220,6 +278,20 @@ bool it_should_compute_vv_tensor_product_om() {
   // Given
   auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_p());
   auto b = ComplexVectMatrix::ket_1();
+
+  // When
+  AlgebraEngine::tensor_product(a, *b);
+
+  // Then
+  const auto k = 1 / std::sqrt(2);
+  const ComplexMatrix expected = {{0, k, 0, k}};
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+}
+
+bool it_should_compute_vv_tensor_product_oo() {
+  // Given
+  auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_p());
+  auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_1());
 
   // When
   AlgebraEngine::tensor_product(a, *b);
@@ -281,8 +353,17 @@ int main() {
   run_test("it_should_compute_inner_product", it_should_compute_inner_product,
            failed, total, true);
 
-  run_test("it_should_compute_tensor_product", it_should_compute_tensor_product,
-           failed, total, true);
+  run_test("it_should_compute_tensor_product_mm",
+           it_should_compute_tensor_product_mm, failed, total, true);
+
+  run_test("it_should_compute_tensor_product_mo",
+           it_should_compute_tensor_product_mo, failed, total, true);
+
+  run_test("it_should_compute_tensor_product_om",
+           it_should_compute_tensor_product_om, failed, total, true);
+
+  run_test("it_should_compute_tensor_product_oo",
+           it_should_compute_tensor_product_oo, failed, total, true);
 
   run_test("it_should_compute_vv_tensor_product_mm",
            it_should_compute_vv_tensor_product_mm, failed, total, true);
@@ -292,6 +373,9 @@ int main() {
 
   run_test("it_should_compute_vv_tensor_product_om",
            it_should_compute_vv_tensor_product_om, failed, total, true);
+
+  run_test("it_should_compute_vv_tensor_product_oo",
+           it_should_compute_vv_tensor_product_oo, failed, total, true);
 
   run_test("it_should_compute_n_fold_tensor_product",
            it_should_compute_n_fold_tensor_product, failed, total, false);
