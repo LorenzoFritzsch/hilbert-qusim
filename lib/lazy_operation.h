@@ -59,7 +59,7 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
-  // Underlaying `Operation` cannot be moved.
+  // Underlaying `Operation` cannot be copied
   LazyOperation(const LazyOperation &) = delete;
   LazyOperation &operator=(const LazyOperation &) = delete;
 
