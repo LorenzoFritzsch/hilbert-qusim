@@ -43,7 +43,7 @@ inline void svout(const StateVector &v, const std::string &title) {
   std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
   auto sq2 = 1 / std::sqrt(2);
   for (int i = size - 1; i >= 0; i--) {
-    auto q = *v[i].to_vector();
+    auto q = *std::get<Qubit>(v.get(i)).to_vector(); // TODO
     auto alpha = q.get(0, 0);
     auto beta = q.get(0, 1);
     alpha = approx_equal(alpha, 0) ? 0 : alpha;
@@ -201,10 +201,10 @@ inline bool verify_identity_matrix(const ComplexVectMatrix &matrix,
   }
 
   for (size_t m = 0; m < matrix.row_size(); m++) {
-    if (!approx_equal(matrix.get(m, m), Complex(1, 0))) {
+    if (!approx_equal(matrix.get(m, m), 1)) {
       return false;
     }
-    if (!approx_equal(simd::cvsve(*matrix.get_row(m)), Complex(1, 0))) {
+    if (!approx_equal(simd::cvsve(*matrix.get_row(m)), 1)) {
       return false;
     }
   }

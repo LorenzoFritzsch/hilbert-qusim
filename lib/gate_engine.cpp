@@ -142,8 +142,6 @@ GateEngine::apply_gate(const ComplexVectMatrix &gate,
   return AlgebraEngine::matrix_vector_product(gate, state);
 }
 
-#include "../test/hilbert_namespace_test.h" // TODO: REMOVE!
-
 std::unique_ptr<LazyOperation>
 GateEngine::controlled_u(std::unique_ptr<LazyOperation> control,
                          std::unique_ptr<LazyOperation> target,
@@ -152,20 +150,10 @@ GateEngine::controlled_u(std::unique_ptr<LazyOperation> control,
   verify_unitarity(u);
   verify_vector(*control, 4);
   verify_vector(*target, 4);
-  auto r = make_controlled_u(u);
-  auto state = std::move(control);
-  AlgebraEngine::tensor_product(r, *LazyOperation::identity(4));
-  AlgebraEngine::tensor_product(state, *target);
-
-  print("State dimension: " + std::to_string(state->column_size()));
-  print("Controlled-U dimensions: " + std::to_string(r->row_size()) + ", " +
-        std::to_string(r->column_size()));
-
-  loout_reals(*state, "State before controlled-U");
-  loout_int(*r, "Controlled-U gate");
-
-  AlgebraEngine::matrix_vector_product(r, *state);
-  return r;
+  auto controlled_u = AlgebraEngine::tensor_product(
+      *make_controlled_u(u), *LazyOperation::identity(4));
+  auto state = AlgebraEngine::tensor_product(*control, *target);
+  return AlgebraEngine::matrix_vector_product(*controlled_u, *state);
 }
 
 std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
@@ -173,11 +161,11 @@ std::unique_ptr<Qubit> GateEngine::controlled_u(const Qubit &target,
                                                 const ComplexVectMatrix &u) {
   verify_sqmatrix(u, 2);
   verify_unitarity(u);
-  const auto state =
+  auto controlled_u = make_controlled_u(u);
+  auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
-  auto lazy_state = make_controlled_u(u);
-  AlgebraEngine::matrix_vector_product(lazy_state, *state);
-  return trout_target(*lazy_state);
+  state = AlgebraEngine::matrix_vector_product(*controlled_u, *state);
+  return trout_target(*state);
 }
 
 std::unique_ptr<LazyOperation>
@@ -185,11 +173,10 @@ GateEngine::controlled_u_stv(const Qubit &target, const Qubit &control,
                              const ComplexVectMatrix &u) {
   verify_sqmatrix(u, 2);
   verify_unitarity(u);
+  auto controlled_u = make_controlled_u(u);
   const auto state =
       AlgebraEngine::tensor_product(*control.to_vector(), *target.to_vector());
-  auto controlled_u = make_controlled_u(u);
-  AlgebraEngine::matrix_vector_product(controlled_u, *state);
-  return controlled_u;
+  return AlgebraEngine::matrix_vector_product(*controlled_u, *state);
 }
 
 std::unique_ptr<Qubit> GateEngine::hadamard(const Qubit &qubit) {

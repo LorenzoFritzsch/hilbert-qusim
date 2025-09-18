@@ -15,6 +15,7 @@
 #include "algebra_engine.h"
 #include "complex_vectorised_matrix.h"
 #include "gate_engine.h"
+#include "hilbert_namespace.h"
 #include "hilbert_namespace_test.h"
 #include <memory>
 
@@ -46,20 +47,19 @@ bool it_should_apply_controlled_gate() {
 bool it_should_apply_control_gate_bipartite_state() {
   // Given
   auto control = AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_1(),
-                                               *ComplexVectMatrix::ket_p());
+                                               *ComplexVectMatrix::ket_m());
   auto target = AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_0(),
-                                              *ComplexVectMatrix::ket_m());
+                                              *ComplexVectMatrix::ket_p());
   auto gate = ComplexVectMatrix::pauli_x();
 
   // When
   auto result =
       GateEngine::controlled_u(std::move(control), std::move(target), *gate);
 
-  loout_reals(*result, "State after controlled-U");
-
   // Then
-  print("Dimension of the returned CNOT state: " +
-        std::to_string(result->column_size()));
+  const auto expected = std::make_unique<ComplexVectMatrix>(ComplexMatrix(
+      {{0, 0, 0, 0, 0, 0, 0, 0, -0.5, -0.5, 0, 0, 0.5, 0.5, 0, 0}}));
+  return are_matrices_equal(*expected, *result);
 }
 
 bool it_should_apply_hadamard() {

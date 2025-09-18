@@ -59,10 +59,6 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
-  // Underlaying `Operation` cannot be copied
-  LazyOperation(const LazyOperation &) = delete;
-  LazyOperation &operator=(const LazyOperation &) = delete;
-
   LazyOperation(const ComplexVectMatrix &left, const ComplexVectMatrix &right,
                 mat_mat op, mat_mat_row op_row, const size_t final_row_size,
                 const size_t final_column_size) {
@@ -100,6 +96,19 @@ public:
                const size_t n) { return mat_vect_[0].get(m, n); },
         op_row, mat.row_size(), mat.column_size());
   }
+
+  LazyOperation(LazyOperation &&) = default;
+
+  LazyOperation &operator=(LazyOperation &&) = default;
+
+  LazyOperation(const LazyOperation &other);
+
+  LazyOperation &operator=(LazyOperation &other) {
+    swap(other);
+    return *this;
+  }
+
+  bool operator==(const LazyOperation &other) const;
 
   void append(const ComplexVectMatrix &mat, op_mat op, op_mat_row op_row,
               const size_t final_row_size, const size_t final_column_size) {
@@ -172,6 +181,11 @@ private:
     mat_vect_.push_back(*ComplexVectMatrix::identity_2x2());
     op_vect_.emplace_back(0, 0, mat_vect_, op_vect_, std::move(op),
                           std::move(op_row), row_size, col_size);
+  }
+
+  void swap(LazyOperation &other) {
+    std::swap(mat_vect_, other.mat_vect_);
+    std::swap(op_vect_, other.op_vect_);
   }
 };
 #endif // !LAZY_OPERATION_H

@@ -216,12 +216,12 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_functor() {
+  [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_func() const {
     return op_functor_;
   }
 
   [[nodiscard]] std::variant<op_op_row, op_mat_row, mat_op_row, mat_mat_row>
-  op_row_functor() {
+  op_row_func() const {
     return op_row_functor_;
   }
 

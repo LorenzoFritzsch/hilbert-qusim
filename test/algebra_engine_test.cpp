@@ -15,6 +15,7 @@
 #include "algebra_engine.h"
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace_test.h"
+#include "lazy_operation.h"
 #include <memory>
 
 bool it_should_compute_conjugate_transpose() {
@@ -90,11 +91,11 @@ bool it_should_compute_matrix_vector_product_om() {
   auto vect = ComplexVectMatrix::ket_0();
 
   // When
-  AlgebraEngine::matrix_vector_product(mat, *vect);
+  auto result = AlgebraEngine::matrix_vector_product(*mat, *vect);
 
   // Then
   const auto expected = ComplexVectMatrix::ket_1();
-  return are_matrices_equal(*expected, *mat);
+  return are_matrices_equal(*expected, *result);
 }
 
 bool it_should_compute_matrix_vector_product_oo() {
@@ -103,11 +104,13 @@ bool it_should_compute_matrix_vector_product_oo() {
   auto vect = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_0());
 
   // When
-  AlgebraEngine::matrix_vector_product(mat, *vect);
+  auto result = AlgebraEngine::matrix_vector_product(*mat, *vect);
 
   // Then
   const auto expected = ComplexVectMatrix::ket_1();
-  return are_matrices_equal(*expected, *mat);
+  // To verify that the LazyOperation copy operator works as expected
+  auto actual = LazyOperation(*result);
+  return are_matrices_equal(*expected, actual);
 }
 
 bool it_should_compute_matrix_exponentiation() {
@@ -212,7 +215,7 @@ bool it_should_compute_tensor_product_om() {
   auto b = ComplexVectMatrix::identity_2x2();
 
   // When
-  AlgebraEngine::tensor_product(a, *b);
+  auto result = AlgebraEngine::tensor_product(*a, *b);
 
   // Then
   const ComplexMatrix expected = {
@@ -222,7 +225,8 @@ bool it_should_compute_tensor_product_om() {
       {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
   };
 
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
 bool it_should_compute_tensor_product_oo() {
@@ -231,7 +235,7 @@ bool it_should_compute_tensor_product_oo() {
   auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::identity_2x2());
 
   // When
-  AlgebraEngine::tensor_product(a, *b);
+  auto result = AlgebraEngine::tensor_product(*a, *b);
 
   // Then
   const ComplexMatrix expected = {
@@ -241,7 +245,8 @@ bool it_should_compute_tensor_product_oo() {
       {0, 1 / std::sqrt(2), -0, -1 / std::sqrt(2)},
   };
 
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
 bool it_should_compute_vv_tensor_product_mm() {
@@ -280,12 +285,13 @@ bool it_should_compute_vv_tensor_product_om() {
   auto b = ComplexVectMatrix::ket_1();
 
   // When
-  AlgebraEngine::tensor_product(a, *b);
+  auto result = AlgebraEngine::tensor_product(*a, *b);
 
   // Then
   const auto k = 1 / std::sqrt(2);
   const ComplexMatrix expected = {{0, k, 0, k}};
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
 bool it_should_compute_vv_tensor_product_oo() {
@@ -294,12 +300,13 @@ bool it_should_compute_vv_tensor_product_oo() {
   auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::ket_1());
 
   // When
-  AlgebraEngine::tensor_product(a, *b);
+  auto result = AlgebraEngine::tensor_product(*a, *b);
 
   // Then
   const auto k = 1 / std::sqrt(2);
   const ComplexMatrix expected = {{0, k, 0, k}};
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)), *a);
+  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
+                            *result);
 }
 
 bool it_should_compute_n_fold_tensor_product() {
@@ -327,6 +334,10 @@ bool it_should_compute_n_fold_tensor_product() {
   print_info("Total elements: " +
              std::to_string(actual->row_size() * actual->column_size()));
 
+  /* FIXME
+  const auto expected = LazyOperation::identity(2 << times);
+  return *expected == *result;
+  */
   return verify_identity_matrix(*actual, std::pow(2, times));
 }
 

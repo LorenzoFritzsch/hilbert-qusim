@@ -25,10 +25,11 @@ std::unique_ptr<StateVector> CircuitEngine::qft(const StateVector &j) {
 
   auto last_index = result.size() - 1;
   for (size_t i = 0; i < j.size(); i++) {
-    auto j_k = GateEngine::hadamard(j.get(i));
+    auto j_k = GateEngine::hadamard(std::get<Qubit>(j.get(i))); // TODO
     for (size_t k_next = i + 1; k_next < j.size(); k_next++) {
-      j_k = GateEngine::controlled_u(*j_k, j.get(k_next),
-                                     *GateEngine::r_k(k_next + 1));
+      j_k =
+          GateEngine::controlled_u(*j_k, std::get<Qubit>(j.get(k_next)), // TODO
+                                   *GateEngine::r_k(k_next + 1));
     }
     result[last_index - i] = *j_k;
   }
@@ -39,12 +40,12 @@ std::unique_ptr<StateVector> CircuitEngine::qft(const StateVector &j) {
 std::unique_ptr<StateVector> CircuitEngine::inverse_qft(const StateVector &k) {
   std::vector<Qubit> result(k.size());
 
-  auto swapped(k.get());
-  std::reverse(swapped.begin(), swapped.end());
+  auto swapped(k);
+  swapped.reverse();
 
   auto last_index = swapped.size() - 1;
   for (int i = last_index; i >= 0; i--) {
-    auto k_i = swapped[i];
+    auto k_i = std::get<Qubit>(swapped.get(i)); // TODO
     for (size_t j = last_index; j > i; j--) {
       k_i = *GateEngine::controlled_u(k_i, result[j],
                                       *GateEngine::r_k(j + 1, true));
@@ -61,15 +62,15 @@ std::unique_ptr<StateVector> CircuitEngine::inverse_qft(const StateVector &k) {
 __complex_precision
 CircuitEngine::qpe(const Qubit &v, const ComplexVectMatrix &u, const int t) {
   mxout(u, "U");
-  StateVector r1(t);
+  StateVector r1(t, StateVector::Type::Qbit);
   for (size_t i = 0; i < t; i++) {
-    auto control = r1[i];
+    auto control = std::get<Qubit>(r1.get(i)); // TODO
     control = *GateEngine::hadamard(control);
     auto u_k = *AlgebraEngine::matrix_exp(u, 1 << i)->to_matrix();
     mxout(u_k, "U" + std::to_string(i));
     auto state = GateEngine::controlled_u_stv(v, control, u_k);
     mxout(*state->to_matrix(), "State after U" + std::to_string(i));
-    r1[i] = *GateEngine::trout_control(*state);
+    r1.insert(*GateEngine::trout_control(*state), i);
   }
   svout(r1, "State before iQFT");
   auto s = inverse_qft(r1);

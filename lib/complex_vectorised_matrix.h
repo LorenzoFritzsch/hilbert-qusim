@@ -66,9 +66,10 @@ public:
       return false;
     }
 
-    const auto diff = simd::cvsub(ComplexVectSplit(vectorised_matrix_),
-                                  ComplexVectSplit(other.vectorised_matrix_));
-    if (!approx_equal(simd::cvsve(*diff), Complex(0, 0))) {
+    if (!approx_equal(simd::cvsve(*simd::cvsub(
+                          ComplexVectSplit(vectorised_matrix_),
+                          ComplexVectSplit(other.vectorised_matrix_))),
+                      0)) {
       return false;
     }
     return true;

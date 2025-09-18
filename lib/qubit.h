@@ -25,7 +25,7 @@ class Qubit final {
 public:
   Qubit(const Complex alpha, const Complex beta) {
     auto n = norm(alpha, beta);
-    if (!approx_equal(n, Complex(1))) {
+    if (!approx_equal(n, 1)) {
       throw std::invalid_argument(
           "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
@@ -40,7 +40,7 @@ public:
     auto alpha = vect.get(0, 0);
     auto beta = vect.get(0, 1);
     auto n = norm(alpha, beta);
-    if (!approx_equal(n, Complex(1))) {
+    if (!approx_equal(n, 1)) {
       throw std::invalid_argument(
           "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
@@ -55,7 +55,7 @@ public:
     auto alpha = op.get(0, 0);
     auto beta = op.get(0, 1);
     auto n = norm(alpha, beta);
-    if (!approx_equal(n, Complex(1))) {
+    if (!approx_equal(n, 1)) {
       throw std::invalid_argument(
           "Qubit must be normalised (norm = " + std::to_string(n.real()) + ")");
     }
@@ -100,11 +100,6 @@ public:
   bool operator!=(const Qubit &other) const {
     return !approx_equal(alpha, other.alpha) && approx_equal(beta, other.beta);
   }
-
-  /*
-   * Calculates the relative phase.
-   */
-  __complex_precision rp() { return std::arg(beta) - std::arg(alpha); }
 
 private:
   Complex alpha;

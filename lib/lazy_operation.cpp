@@ -13,10 +13,69 @@
 // limitations under the License.
 
 #include "lazy_operation.h"
+#include "complex_vector_split.h"
 #include "complex_vectorised_matrix.h"
 
 #include <memory>
 #include <thread>
+
+LazyOperation::LazyOperation(const LazyOperation &other) {
+  for (size_t i = 0; i < other.op_vect_.size(); i++) {
+    const auto op = other.op_vect_[i];
+    switch (op.op_type()) {
+    case OperationOperation:
+      op_vect_.emplace_back(op.left_index(), op.right_index(), mat_vect_,
+                            op_vect_, std::get<op_op>(op.op_func()),
+                            std::get<op_op_row>(op.op_row_func()),
+                            op.row_size(), op.column_size());
+      break;
+    case OperationMatrix:
+      mat_vect_.push_back(std::get<ComplexVectMatrix>(op.right()));
+      op_vect_.emplace_back(op.left_index(), mat_vect_.size() - 1, mat_vect_,
+                            op_vect_, std::get<op_mat>(op.op_func()),
+                            std::get<op_mat_row>(op.op_row_func()),
+                            op.row_size(), op.column_size());
+      break;
+    case MatrixMatrix:
+      mat_vect_.push_back(std::get<ComplexVectMatrix>(op.left()));
+      mat_vect_.push_back(std::get<ComplexVectMatrix>(op.right()));
+      op_vect_.emplace_back(mat_vect_.size() - 2, mat_vect_.size() - 1,
+                            mat_vect_, op_vect_,
+                            std::get<mat_mat>(op.op_func()),
+                            std::get<mat_mat_row>(op.op_row_func()),
+                            op.row_size(), op.column_size());
+      break;
+    case MatrixOperation:
+      // Unused
+      throw std::logic_error("MatrixOperation copy not implemented.");
+    }
+  }
+}
+
+bool are_vectors_equal(const ComplexVectSplit &left,
+                       const ComplexVectSplit &right) {
+  if (left.real().size() != right.real().size() ||
+      left.imag().size() != right.imag().size()) {
+    return false;
+  }
+  if (!approx_equal(simd::cvsve(*simd::cvsub(left, right)), 0)) {
+    return false;
+  }
+  return true;
+}
+
+bool LazyOperation::operator==(const LazyOperation &other) const {
+  if (row_size() != other.row_size() || column_size() != other.column_size() ||
+      mat_vect_.size() != other.mat_vect_.size() || mat_vect_ != mat_vect_) {
+    return false;
+  }
+  for (size_t i = 0; i < row_size(); i++) {
+    if (!are_vectors_equal(*get(i), *other.get(i))) {
+      return false;
+    }
+  }
+  return true;
+}
 
 void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
                            op_op_row op_row, const size_t final_row_size,
@@ -33,8 +92,8 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
     case OperationMatrix: {
       mat_vect_.push_back(std::get<ComplexVectMatrix>(operation.right()));
       op_vect_.emplace_back(op_next - 1, mat_next, mat_vect_, op_vect_,
-                            std::get<op_mat>(operation.op_functor()),
-                            std::get<op_mat_row>(operation.op_row_functor()),
+                            std::get<op_mat>(operation.op_func()),
+                            std::get<op_mat_row>(operation.op_row_func()),
                             operation.row_size(), operation.column_size());
       break;
     }
@@ -42,8 +101,8 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
       mat_vect_.push_back(std::get<ComplexVectMatrix>(operation.left()));
       mat_vect_.push_back(std::get<ComplexVectMatrix>(operation.right()));
       op_vect_.emplace_back(mat_next, mat_next + 1, mat_vect_, op_vect_,
-                            std::get<mat_mat>(operation.op_functor()),
-                            std::get<mat_mat_row>(operation.op_row_functor()),
+                            std::get<mat_mat>(operation.op_func()),
+                            std::get<mat_mat_row>(operation.op_row_func()),
                             operation.row_size(), operation.column_size());
       break;
     }
@@ -51,8 +110,8 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
       auto left_index = sub_op_start_index + operation.left_index();
       auto right_index = sub_op_start_index + operation.right_index();
       op_vect_.emplace_back(left_index, right_index, mat_vect_, op_vect_,
-                            std::get<op_op>(operation.op_functor()),
-                            std::get<op_op_row>(operation.op_row_functor()),
+                            std::get<op_op>(operation.op_func()),
+                            std::get<op_op_row>(operation.op_row_func()),
                             operation.row_size(), operation.column_size());
       break;
     }
@@ -70,7 +129,6 @@ void LazyOperation::append(const LazyOperation &lazy_op, op_op op,
 }
 
 std::unique_ptr<ComplexVectMatrix> LazyOperation::to_matrix() const {
-
   const auto available_threads = std::thread::hardware_concurrency();
   const auto total_rows = row_size();
   const auto total_cols = column_size();
