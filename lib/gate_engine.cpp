@@ -23,11 +23,15 @@
 #include <stdexcept>
 #include <string>
 
+/*
+ * Computes the controlled-U matrix given the unitary U.
+ */
 inline std::unique_ptr<LazyOperation>
 make_controlled_u(const ComplexVectMatrix &u) {
-  return AlgebraEngine::sum(
-      *ComplexVectMatrix::proj_0_i(),
-      *AlgebraEngine::tensor_product(*ComplexVectMatrix::ket_1_dm(), u));
+  return AlgebraEngine::matsum(
+      *AlgebraEngine::tensor_product(*ComplexVectMatrix::proj_k0(),
+                                     *LazyOperation::identity(u.row_size())),
+      *AlgebraEngine::tensor_product(*ComplexVectMatrix::proj_k1(), u));
 }
 
 std::unique_ptr<ComplexVectMatrix>
@@ -140,6 +144,12 @@ std::unique_ptr<LazyOperation>
 GateEngine::apply_gate(const ComplexVectMatrix &gate,
                        const ComplexVectMatrix &state) {
   return AlgebraEngine::matrix_vector_product(gate, state);
+}
+
+std::unique_ptr<LazyOperation>
+GateEngine::controlled_u(const Qubit &control, const StateVector &target,
+                         const ComplexVectMatrix &u) {
+  // TODO
 }
 
 std::unique_ptr<LazyOperation>

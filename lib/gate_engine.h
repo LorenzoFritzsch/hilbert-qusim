@@ -19,6 +19,7 @@
 #include "hilbert_namespace.h"
 #include "lazy_operation.h"
 #include "qubit.h"
+#include "state_vector.h"
 #include <memory>
 #include <numbers>
 
@@ -45,6 +46,15 @@ public:
    */
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   apply_gate(const ComplexVectMatrix &gate, const ComplexVectMatrix &state);
+
+  /*
+   * Applies a controlled-U gate to the state given a control qubit, and returns
+   * the resulting |control, target> state vector as a lazy operation.
+   * The matrix u is the unitary transformation to be applied to the state.
+   */
+  [[nodiscard]] static std::unique_ptr<LazyOperation>
+  controlled_u(const Qubit &control, const StateVector &target,
+               const ComplexVectMatrix &u);
 
   /*
    * Applies a controlled-U gate and returns the resulting target qubit.

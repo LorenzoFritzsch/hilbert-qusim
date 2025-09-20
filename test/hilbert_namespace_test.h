@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 
 /*
@@ -35,15 +36,19 @@ inline std::string mussec(unsigned long long delta_mus) {
 }
 
 /*
- * Prints out a state vector.
+ * Prints out a qubit state vector.
+ * TODO: Write it better
  */
 inline void svout(const StateVector &v, const std::string &title) {
+  if (v.type() != StateVector::Qbit) {
+    throw std::invalid_argument("svout: invalid state vector type");
+  }
   const auto size = v.size();
   const auto qbits = v.get();
   std::cout << std::endl << "\033[1m" << title << "\033[0m" << std::endl;
   auto sq2 = 1 / std::sqrt(2);
   for (int i = size - 1; i >= 0; i--) {
-    auto q = *std::get<Qubit>(v.get(i)).to_vector(); // TODO
+    auto q = *std::get<Qubit>(v.get(i)).to_vector();
     auto alpha = q.get(0, 0);
     auto beta = q.get(0, 1);
     alpha = approx_equal(alpha, 0) ? 0 : alpha;

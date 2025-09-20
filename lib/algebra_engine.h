@@ -58,10 +58,13 @@ public:
   scalar_product(const ComplexVectMatrix &mat, const Complex &k);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
-  sum(const ComplexVectMatrix &mat_left, const ComplexVectMatrix &mat_right);
+  matsum(const ComplexVectMatrix &left, const ComplexVectMatrix &right);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
-  sum(const ComplexVectMatrix &mat_left, const LazyOperation &mat_right);
+  matsum(const ComplexVectMatrix &left, const LazyOperation &right);
+
+  [[nodiscard]] static std::unique_ptr<LazyOperation>
+  matsum(const LazyOperation &left, const LazyOperation &right);
 
   [[nodiscard]] static std::unique_ptr<LazyOperation>
   tensor_product(const ComplexVectMatrix &mat_left,

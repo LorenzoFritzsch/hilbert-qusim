@@ -473,31 +473,43 @@ AlgebraEngine::scalar_product(const ComplexVectMatrix &mat, const Complex &k) {
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::sum(const ComplexVectMatrix &mat_left,
-                   const ComplexVectMatrix &mat_right) {
-  size_t mat_left_row_size = mat_left.row_size();
-  size_t mat_left_column_size = mat_left.column_size();
-  if (mat_left_row_size != mat_right.row_size() ||
-      mat_left_column_size != mat_right.column_size()) {
+AlgebraEngine::matsum(const ComplexVectMatrix &left,
+                      const ComplexVectMatrix &right) {
+  size_t left_row_size = left.row_size();
+  size_t left_column_size = left.column_size();
+  if (left_row_size != right.row_size() ||
+      left_column_size != right.column_size()) {
     throw std::invalid_argument("Matrix sizes do not match");
   }
-  return std::make_unique<LazyOperation>(mat_left, mat_right, sum_mat_mat,
-                                         sum_mat_mat_row, mat_left_row_size,
-                                         mat_left_column_size);
+  return std::make_unique<LazyOperation>(left, right, sum_mat_mat,
+                                         sum_mat_mat_row, left_row_size,
+                                         left_column_size);
 }
 
 std::unique_ptr<LazyOperation>
-AlgebraEngine::sum(const ComplexVectMatrix &mat_left,
-                   const LazyOperation &mat_right) {
-  size_t mat_left_row_size = mat_left.row_size();
-  size_t mat_left_column_size = mat_left.column_size();
-  if (mat_left_row_size != mat_right.row_size() ||
-      mat_left_column_size != mat_right.column_size()) {
+AlgebraEngine::matsum(const ComplexVectMatrix &left,
+                      const LazyOperation &right) {
+  size_t left_row_size = left.row_size();
+  size_t left_column_size = left.column_size();
+  if (left_row_size != right.row_size() ||
+      left_column_size != right.column_size()) {
     throw std::invalid_argument("Matrix sizes do not match");
   }
-  return std::make_unique<LazyOperation>(mat_left, mat_right, sum_op_op,
-                                         sum_op_op_row, mat_left_row_size,
-                                         mat_left_column_size);
+  return std::make_unique<LazyOperation>(left, right, sum_op_op, sum_op_op_row,
+                                         left_row_size, left_column_size);
+}
+
+std::unique_ptr<LazyOperation>
+AlgebraEngine::matsum(const LazyOperation &left, const LazyOperation &right) {
+  size_t left_row_size = left.row_size();
+  size_t left_column_size = left.column_size();
+  if (left_row_size != right.row_size() ||
+      left_column_size != right.column_size()) {
+    throw std::invalid_argument("Matrix sizes do not match");
+  }
+  auto r = std::make_unique<LazyOperation>(left);
+  r->append(right, sum_op_op, sum_op_op_row, left_row_size, left_column_size);
+  return r;
 }
 
 std::unique_ptr<LazyOperation>

@@ -155,18 +155,45 @@ bool it_should_compute_scalar_vector_product() {
                             *result);
 }
 
-bool it_should_compute_sum() {
+bool it_should_compute_matsum_mm() {
   // Given
   auto a = ComplexVectMatrix::identity_2x2();
   auto b = ComplexVectMatrix::identity_2x2();
 
   // When
-  const auto result = AlgebraEngine::sum(*a, *b);
+  const auto result = AlgebraEngine::matsum(*a, *b);
 
   // Then
   const ComplexMatrix expected = {{2, 0}, {0, 2}};
-  return are_matrices_equal(ComplexVectMatrix(ComplexMatrix(expected)),
-                            *result);
+  return are_matrices_equal(ComplexVectMatrix(expected), *result);
+}
+
+bool it_should_compute_matsum_mo() {
+  // Given
+  auto a = ComplexVectMatrix::identity_2x2();
+  auto b = std::make_unique<LazyOperation>(*ComplexVectMatrix::identity_2x2());
+
+  // When
+  const auto result = AlgebraEngine::matsum(*a, *b);
+
+  // Then
+  const ComplexMatrix expected = {{2, 0}, {0, 2}};
+  return are_matrices_equal(ComplexVectMatrix(expected), *result);
+}
+
+bool it_should_compute_matsum_oo() {
+  // Given
+  auto a = std::make_unique<LazyOperation>(*ComplexVectMatrix::identity_2x2());
+  auto b = std::make_unique<LazyOperation>(
+      LazyOperation( // To also test LazyOperation's move constructor
+          *ComplexVectMatrix::identity_2x2()));
+
+  // When
+  const auto result = AlgebraEngine::matsum(*a, *b);
+
+  // Then
+  const ComplexMatrix expected = {{2, 0}, {0, 2}};
+  return are_matrices_equal(ComplexVectMatrix(expected), *result);
 }
 
 bool it_should_compute_tensor_product_mm() {
@@ -397,7 +424,14 @@ int main() {
   run_test("it_should_compute_scalar_vector_product",
            it_should_compute_scalar_vector_product, failed, total, true);
 
-  run_test("it_should_compute_sum", it_should_compute_sum, failed, total, true);
+  run_test("it_should_compute_matsum_mm", it_should_compute_matsum_mm, failed,
+           total, true);
+
+  run_test("it_should_compute_matsum_mo", it_should_compute_matsum_mo, failed,
+           total, true);
+
+  run_test("it_should_compute_matsum_oo", it_should_compute_matsum_oo, failed,
+           total, true);
 
   run_test("it_should_compute_outer_product", it_should_compute_outer_product,
            failed, total, true);

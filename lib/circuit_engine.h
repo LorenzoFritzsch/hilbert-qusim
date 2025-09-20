@@ -17,7 +17,6 @@
 
 #include "complex_vectorised_matrix.h"
 #include "hilbert_namespace.h"
-#include "lazy_operation.h"
 #include "qubit.h"
 #include "state_vector.h"
 #include <memory.h>
@@ -27,13 +26,18 @@ class CircuitEngine {
 public:
   CircuitEngine() = delete;
 
+  /*
+   * Given any type of StateVector, it computes the Quantum Fourier Transform
+   * circuit and returns a Lazy StateVector.
+   */
   [[nodiscard]] static std::unique_ptr<StateVector> qft(const StateVector &j);
 
+  /*
+   * Given any type of StateVector, it computes the Inverse Quantum Fourier
+   * Transform circuit and returns a Lazy StateVector.
+   */
   [[nodiscard]] static std::unique_ptr<StateVector>
   inverse_qft(const StateVector &k);
-
-  [[nodiscard]] static std::unique_ptr<LazyOperation>
-  inverse_qft(const LazyOperation &operation);
 
   [[nodiscard]] static __complex_precision
   qpe(const Qubit &v, const ComplexVectMatrix &u, const int t = 8);

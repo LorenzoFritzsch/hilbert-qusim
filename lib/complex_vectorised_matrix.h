@@ -187,15 +187,22 @@ public:
   }
 
   /*
-   * Returns the density matrix |1><1|.
+   * Returns the projector |0><0|
    */
-  static std::unique_ptr<ComplexVectMatrix> ket_1_dm() {
+  static std::unique_ptr<ComplexVectMatrix> proj_k0() {
+    return std::make_unique<ComplexVectMatrix>(ComplexMatrix{{1, 0}, {0, 0}});
+  }
+
+  /*
+   * Returns the projector |1><1|.
+   */
+  static std::unique_ptr<ComplexVectMatrix> proj_k1() {
     return std::make_unique<ComplexVectMatrix>(ComplexMatrix{{0, 0}, {0, 1}});
   }
 
 private:
-  const size_t row_size_;
-  const size_t column_size_;
+  size_t row_size_;
+  size_t column_size_;
   ComplexVector vectorised_matrix_;
 };
 

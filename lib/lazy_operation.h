@@ -19,7 +19,7 @@
 #include "complex_vectorised_matrix.h"
 #include "operation.h"
 #include <cstddef>
-#include <functional>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -36,72 +36,29 @@
  */
 class LazyOperation final {
 public:
-  using op_op =
-      std::function<Complex(const Operation &left, const Operation &right,
-                            const size_t m, const size_t n)>;
-  using op_mat = std::function<Complex(const Operation &left,
-                                       const ComplexVectMatrix &right,
-                                       const size_t m, const size_t n)>;
-  using mat_op = std::function<Complex(const ComplexVectMatrix &left,
-                                       const Operation &right, const size_t m,
-                                       const size_t n)>;
-  using mat_mat = std::function<Complex(const ComplexVectMatrix &left,
-                                        const ComplexVectMatrix &right,
-                                        const size_t m, const size_t n)>;
-
-  using op_op_row = std::function<std::unique_ptr<ComplexVectSplit>(
-      const Operation &left, const Operation &right, const size_t row)>;
-  using op_mat_row = std::function<std::unique_ptr<ComplexVectSplit>(
-      const Operation &left, const ComplexVectMatrix &right, const size_t row)>;
-  using mat_op_row = std::function<std::unique_ptr<ComplexVectSplit>(
-      const ComplexVectMatrix &left, const Operation &right, const size_t row)>;
-  using mat_mat_row = std::function<std::unique_ptr<ComplexVectSplit>(
-      const ComplexVectMatrix &left, const ComplexVectMatrix &right,
-      const size_t row)>;
-
   LazyOperation(const ComplexVectMatrix &left, const ComplexVectMatrix &right,
-                mat_mat op, mat_mat_row op_row, const size_t final_row_size,
-                const size_t final_column_size) {
+                Operation::mat_mat op, Operation::mat_mat_row op_row,
+                const size_t final_row_size, const size_t final_column_size) {
     mat_vect_.push_back(left);
     mat_vect_.push_back(right);
     op_vect_.emplace_back(0, 1, mat_vect_, op_vect_, std::move(op),
                           std::move(op_row), final_row_size, final_column_size);
   }
 
-  explicit LazyOperation(const ComplexVectMatrix &mat) {
-    mat_vect_.push_back(mat);
-    op_vect_.emplace_back(
-        0, 0, mat_vect_, op_vect_,
-        [this](const ComplexVectMatrix &left, const ComplexVectMatrix &,
-               const size_t m,
-               const size_t n) { return mat_vect_[0].get(m, n); },
-        [this](const ComplexVectMatrix &left, const ComplexVectMatrix &right,
-               const size_t row) { return mat_vect_[0].get_row(row); },
-        mat.row_size(), mat.column_size());
-  }
+  explicit LazyOperation(const ComplexVectMatrix &mat);
 
   LazyOperation(const ComplexVectMatrix &left, const LazyOperation &right,
-                op_op op, op_op_row op_row, const size_t final_row_size,
-                const size_t final_column_size)
+                Operation::op_op op, Operation::op_op_row op_row,
+                const size_t final_row_size, const size_t final_column_size)
       : LazyOperation(left) {
     append(right, op, op_row, final_row_size, final_column_size);
   }
 
-  LazyOperation(const ComplexVectMatrix &mat, mat_mat_row op_row) {
-    mat_vect_.push_back(mat);
-    op_vect_.emplace_back(
-        0, 0, mat_vect_, op_vect_,
-        [this](const ComplexVectMatrix &left, const ComplexVectMatrix &,
-               const size_t m,
-               const size_t n) { return mat_vect_[0].get(m, n); },
-        op_row, mat.row_size(), mat.column_size());
-  }
-
-  LazyOperation(LazyOperation &&) = default;
-
-  LazyOperation &operator=(LazyOperation &&) = default;
+  LazyOperation(LazyOperation &&other);
 
   LazyOperation(const LazyOperation &other);
+
+  LazyOperation &operator=(LazyOperation &&other);
 
   LazyOperation &operator=(LazyOperation &other) {
     swap(other);
@@ -110,16 +67,18 @@ public:
 
   bool operator==(const LazyOperation &other) const;
 
-  void append(const ComplexVectMatrix &mat, op_mat op, op_mat_row op_row,
-              const size_t final_row_size, const size_t final_column_size) {
+  void append(const ComplexVectMatrix &mat, Operation::op_mat op,
+              Operation::op_mat_row op_row, const size_t final_row_size,
+              const size_t final_column_size) {
     mat_vect_.push_back(mat);
     op_vect_.emplace_back(op_vect_.size() - 1, mat_vect_.size() - 1, mat_vect_,
                           op_vect_, std::move(op), std::move(op_row),
                           final_row_size, final_column_size);
   }
 
-  void append(const LazyOperation &lazy_op, op_op op, op_op_row op_row,
-              const size_t final_row_size, const size_t column_size);
+  void append(const LazyOperation &lazy_op, Operation::op_op op,
+              Operation::op_op_row op_row, const size_t final_row_size,
+              const size_t column_size);
 
   [[nodiscard]] Complex get(const size_t m, const size_t n) const {
     return op_vect_.back().get(m, n);
@@ -176,8 +135,8 @@ private:
   std::vector<ComplexVectMatrix> mat_vect_;
   std::vector<Operation> op_vect_;
 
-  LazyOperation(mat_mat op, mat_mat_row op_row, const size_t row_size,
-                const size_t col_size) {
+  LazyOperation(Operation::mat_mat op, Operation::mat_mat_row op_row,
+                const size_t row_size, const size_t col_size) {
     mat_vect_.push_back(*ComplexVectMatrix::identity_2x2());
     op_vect_.emplace_back(0, 0, mat_vect_, op_vect_, std::move(op),
                           std::move(op_row), row_size, col_size);

@@ -19,41 +19,50 @@
 #include "qubit.h"
 #include "state_vector.h"
 #include <memory>
+#include <stdexcept>
 
 std::unique_ptr<StateVector> CircuitEngine::qft(const StateVector &j) {
-  std::vector<Qubit> result(j.size());
-
-  auto last_index = result.size() - 1;
-  for (size_t i = 0; i < j.size(); i++) {
-    auto j_k = GateEngine::hadamard(std::get<Qubit>(j.get(i))); // TODO
-    for (size_t k_next = i + 1; k_next < j.size(); k_next++) {
-      j_k =
-          GateEngine::controlled_u(*j_k, std::get<Qubit>(j.get(k_next)), // TODO
-                                   *GateEngine::r_k(k_next + 1));
+  switch (j.type()) {
+  case StateVector::Qbit: {
+    auto r = std::make_unique<StateVector>(j.size(), StateVector::Qbit);
+    auto last_index = r->size() - 1;
+    for (size_t i = 0; i < j.size(); i++) {
+      auto j_k = GateEngine::hadamard(std::get<Qubit>(j.get(i)));
+      for (size_t k_next = i + 1; k_next < j.size(); k_next++) {
+        j_k = GateEngine::controlled_u(*j_k, std::get<Qubit>(j.get(k_next)),
+                                       *GateEngine::r_k(k_next + 1));
+      }
+      r->insert(*j_k, last_index - i);
     }
-    result[last_index - i] = *j_k;
+    return r;
   }
-
-  return std::make_unique<StateVector>(result);
+  case StateVector::Lazy:
+    // TODO
+    throw std::runtime_error("Lazy QFT not implemented yet");
+  }
 }
 
 std::unique_ptr<StateVector> CircuitEngine::inverse_qft(const StateVector &k) {
-  std::vector<Qubit> result(k.size());
-
-  auto swapped(k);
-  swapped.reverse();
-
-  auto last_index = swapped.size() - 1;
-  for (int i = last_index; i >= 0; i--) {
-    auto k_i = std::get<Qubit>(swapped.get(i)); // TODO
-    for (size_t j = last_index; j > i; j--) {
-      k_i = *GateEngine::controlled_u(k_i, result[j],
-                                      *GateEngine::r_k(j + 1, true));
+  switch (k.type()) {
+  case StateVector::Qbit: {
+    auto r = std::make_unique<StateVector>(k.size(), StateVector::Qbit);
+    auto swapped(k);
+    swapped.reverse();
+    auto last_index = swapped.size() - 1;
+    for (int i = last_index; i >= 0; i--) {
+      auto k_i = std::get<Qubit>(swapped.get(i));
+      for (size_t j = last_index; j > i; j--) {
+        k_i = *GateEngine::controlled_u(k_i, std::get<Qubit>(r->get(j)),
+                                        *GateEngine::r_k(j + 1, true));
+      }
+      r->insert(*GateEngine::hadamard(k_i), i);
     }
-    result[i] = *GateEngine::hadamard(k_i);
+    return r;
   }
-
-  return std::make_unique<StateVector>(result);
+  case StateVector::Lazy:
+    // TODO
+    throw std::runtime_error("Lazy iQFT not implemented yet");
+  }
 }
 
 // TODO: remove
@@ -62,7 +71,7 @@ std::unique_ptr<StateVector> CircuitEngine::inverse_qft(const StateVector &k) {
 __complex_precision
 CircuitEngine::qpe(const Qubit &v, const ComplexVectMatrix &u, const int t) {
   mxout(u, "U");
-  StateVector r1(t, StateVector::Type::Qbit);
+  StateVector r1(t, StateVector::Qbit);
   for (size_t i = 0; i < t; i++) {
     auto control = std::get<Qubit>(r1.get(i)); // TODO
     control = *GateEngine::hadamard(control);

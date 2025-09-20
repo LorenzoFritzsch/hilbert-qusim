@@ -84,12 +84,6 @@ public:
       const ComplexVectMatrix &left, const ComplexVectMatrix &right,
       const size_t row)>;
 
-  // An `Operation` can be moved but not copied.
-  Operation(Operation &&) = default;
-  Operation &operator=(Operation &&) = delete;
-  Operation(const Operation &) = default;
-  Operation &operator=(const Operation &) = delete;
-
   Operation(size_t left_index, size_t right_index,
             const std::vector<ComplexVectMatrix> &mat_vect,
             const std::vector<Operation> &op_vect, op_op op, op_op_row op_row,
@@ -126,6 +120,19 @@ public:
         op_type_(MatrixMatrix), mat_vect_(mat_vect), op_vect_(op_vect),
         op_functor_(std::move(op)), op_row_functor_(std::move(op_row)),
         row_size_(final_row_size), column_size_(final_column_size) {}
+
+  Operation(Operation &&other) = delete;
+
+  Operation(const Operation &other)
+      : left_index_(other.left_index_), right_index_(other.right_index_),
+        op_type_(other.op_type_), mat_vect_(other.mat_vect_),
+        op_vect_(other.op_vect_), op_functor_(other.op_functor_),
+        op_row_functor_(other.op_row_functor_), row_size_(other.row_size_),
+        column_size_(other.column_size_) {}
+
+  Operation &operator=(Operation &&) = delete;
+
+  Operation &operator=(const Operation &) = delete;
 
   /*
    * Element-specific get.
@@ -200,10 +207,6 @@ public:
     throw std::logic_error("Unexpected OperationType");
   }
 
-  [[nodiscard]] size_t left_index() const { return left_index_; }
-
-  [[nodiscard]] size_t right_index() const { return right_index_; }
-
   [[nodiscard]] std::variant<Operation, ComplexVectMatrix> right() const {
     switch (op_type_) {
     case OperationOperation:
@@ -215,6 +218,10 @@ public:
     }
     throw std::logic_error("Unexpected OperationType");
   }
+
+  [[nodiscard]] size_t left_index() const { return left_index_; }
+
+  [[nodiscard]] size_t right_index() const { return right_index_; }
 
   [[nodiscard]] std::variant<op_op, op_mat, mat_op, mat_mat> op_func() const {
     return op_functor_;

@@ -52,6 +52,7 @@ public:
     case Lazy:
       return std::get<std::vector<LazyOperation>>(state_vector_).at(i);
     }
+    throw std::logic_error("Unexpected StateVector::Type");
   }
 
   const std::variant<std::vector<Qubit>, std::vector<LazyOperation>>
@@ -144,7 +145,10 @@ public:
     case Lazy:
       return std::get<std::vector<LazyOperation>>(state_vector_).size();
     }
+    throw std::logic_error("Unexpected StateVector::Type");
   }
+
+  Type type() const { return type_; }
 
   /* Following methods don't really align with basic quantum principles but are
    * quite useful in different scenarios, and for performance reasons. */
@@ -162,6 +166,7 @@ public:
              std::get<std::vector<LazyOperation>>(other.state_vector_);
       break;
     }
+    throw std::logic_error("Unexpected StateVector::Type");
   }
 
 private:
